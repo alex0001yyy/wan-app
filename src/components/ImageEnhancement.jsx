@@ -238,85 +238,104 @@ export const ImageEnhancement = ({ onGenerate, isGenerating }) => {
                             : ENHANCEMENT_MODELS[0].functions.find(f => f.id === selectedFunction)?.description}
                     </p>
 
-                    {/* 图像上传区域 */}
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center gap-2">
-                            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
-                                <Upload className="text-blue-600" size={14} />
-                                输入图像
-                            </label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                                id="input-image-upload"
-                                required
-                            />
-                            {inputImage ? (
-                                <div className="relative group">
-                                    <img
-                                        src={inputImage}
-                                        alt="输入图像"
-                                        className="h-16 w-16 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-colors"
-                                        onClick={() => setPreviewImage(inputImage)}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setInputImage(null);
-                                            setInputImageUrl(null);
-                                        }}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <label
-                                    htmlFor="input-image-upload"
-                                    className="h-16 w-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                {/* 图像上传区域 */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                            <Upload className="text-blue-600" size={14} />
+                            输入图像
+                        </label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            id="input-image-upload"
+                            required
+                        />
+                        {inputImage ? (
+                            <div className="relative group">
+                                <img
+                                    src={inputImage}
+                                    alt="输入图像"
+                                    className="h-8 w-auto object-cover rounded cursor-pointer"
+                                    onClick={() => setPreviewImage(inputImage)}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setInputImage(null);
+                                        setInputImageUrl(null);
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
-                                    <Upload className="text-gray-400" size={20} />
-                                </label>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* 提示词（部分功能需要） */}
-                    {selectedModel === 'wanx2.1-imageedit' && needsPrompt && (
-                        <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Wand2 className="text-gray-500" size={12} />
-                                提示词
+                                    ✕
+                                </button>
+                            </div>
+                        ) : (
+                            <label
+                                htmlFor="input-image-upload"
+                                className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
+                            >
+                                <Upload className="text-gray-400" size={14} />
+                                <span className="text-xs text-gray-500">点击上传</span>
                             </label>
-                            <textarea
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder={selectedFunction === 'expand' 
-                                    ? "描述扩图内容，例如：一位绿色仙子" 
-                                    : "描述色彩风格，例如：蓝色背景，黄色的叶子"}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                                rows="3"
-                                required
-                            />
-                        </div>
-                    )}
+                        )}
+                    </div>
+                </div>
 
-                    {/* 高级设置 */}
-                    <div className="border-t border-gray-200 pt-3">
-                        <button
-                            type="button"
-                            onClick={() => setShowAdvanced(!showAdvanced)}
-                            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors"
-                        >
-                            <Settings2 size={14} />
-                            高级设置
-                            {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
+                {/* 提示词（部分功能需要） */}
+                {selectedModel === 'wanx2.1-imageedit' && needsPrompt && (
+                    <div>
+                        <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2">
+                            <Wand2 size={14} className="text-violet-500" />
+                            提示词
+                        </label>
+                        <textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            placeholder={selectedFunction === 'expand' 
+                                ? "描述扩展区域应该生成什么内容，例如：继续原场景" 
+                                : "描述想要的配色风格，例如：温暖自然的色彩"}
+                            className="w-full min-h-[100px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                            required
+                        />
+                    </div>
+                )}
 
-                        {showAdvanced && (
-                            <div className="mt-3 space-y-3">
+                {/* 操作按钮 */}
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${showAdvanced ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-150'}`}
+                    >
+                        <Settings2 size={16} className="inline mr-2" />
+                        {showAdvanced ? '收起设置' : '高级设置'}
+                    </button>
+                    
+                    <button
+                        type="submit"
+                        disabled={isGenerating}
+                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                <span>处理中...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Maximize size={18} />
+                                <span>开始增强</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* 高级设置 */}
+                {showAdvanced && (
+                    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 border border-gray-200 space-y-4 animate-in slide-in-from-top-2 duration-200">
                                 {selectedModel === 'image-out-painting' ? (
                                     <>
                                         <div>
@@ -488,21 +507,9 @@ export const ImageEnhancement = ({ onGenerate, isGenerating }) => {
                                         </div>
                                     </>
                                 )}
-                            </div>
-                        )}
                     </div>
-
-                    {/* 提交按钮 */}
-                    <button
-                        type="submit"
-                        disabled={isGenerating}
-                        className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                    >
-                        <Maximize size={18} />
-                        {isGenerating ? '处理中...' : '开始增强'}
-                    </button>
-                </form>
-            </div>
+                )}
+            </form>
 
             {/* 图片预览弹窗 */}
             {previewImage && (
