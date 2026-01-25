@@ -152,10 +152,28 @@ export const ImageEnhancement = ({ onGenerate, isGenerating }) => {
     const needsPrompt = selectedFunction === 'expand' || selectedFunction === 'colorization';
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-5">
-                <form onSubmit={handleSubmit} className="space-y-3">
-                    {/* 模型和功能选择 */}
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {/* 提示词输入 */}
+                {(selectedModel === 'wanx2.1-imageedit' && needsPrompt) && (
+                    <div className="relative">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2">
+                            <Wand2 size={14} className="text-violet-500" />
+                            提示词
+                        </label>
+                        <textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            placeholder={selectedFunction === 'expand' 
+                                ? "描述扩展区域应该生成什么内容，例如：继续原场景" 
+                                : "描述想要的配色风格，例如：温暖自然的色彩"}
+                            className="w-full min-h-[100px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                            required
+                        />
+                    </div>
+                )}
+
+                {/* 模型和功能选择 */}
                     <div className="grid grid-cols-3 gap-3">
                         <div>
                             <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">

@@ -132,20 +132,32 @@ export const SketchToImage = ({ onGenerate, isGenerating }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-5">
-                <form onSubmit={handleSubmit} className="space-y-3">
-                    {/* 模型选择 */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Sparkles className="text-gray-500" size={12} />
-                                模型
-                            </label>
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {/* 提示词输入 */}
+                <div className="relative">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2">
+                        <Wand2 size={14} className="text-violet-500" />
+                        提示词
+                    </label>
+                    <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="描述想要生成的图像，例如：北欧极简风格的客厅"
+                        className="w-full min-h-[100px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                        required
+                    />
+                </div>
+
+                {/* 模型选择 */}
+                <div className="grid grid-cols-3 gap-3">
+                    <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1.5 block">模型版本</label>
+                        <div className="relative">
                             <select
                                 value={selectedModel}
                                 onChange={(e) => setSelectedModel(e.target.value)}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
+                                className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
                             >
                                 {SKETCH_MODELS.map(model => (
                                     <option key={model.id} value={model.id}>
@@ -153,120 +165,118 @@ export const SketchToImage = ({ onGenerate, isGenerating }) => {
                                     </option>
                                 ))}
                             </select>
+                            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
+                    </div>
 
-                        <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Settings2 className="text-gray-500" size={12} />
-                                分辨率
-                            </label>
+                    <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1.5 block">分辨率</label>
+                        <div className="relative">
                             <select
                                 value={resolution}
                                 onChange={(e) => setResolution(e.target.value)}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
+                                className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
                             >
                                 {RESOLUTIONS.map(res => (
                                     <option key={res} value={res}>{res}</option>
                                 ))}
                             </select>
-                        </div>
-
-                        <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Hash className="text-gray-500" size={12} />
-                                数量
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                max="4"
-                                value={n}
-                                onChange={(e) => setN(parseInt(e.target.value) || 1)}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                            />
+                            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
                     </div>
 
-                    {/* 模型描述 */}
-                    <p className="text-xs text-gray-400 leading-relaxed -mt-1">
-                        {SKETCH_MODELS.find(m => m.id === selectedModel)?.description}
-                    </p>
-
-                    {/* 图像上传区域 */}
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center gap-2">
-                            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
-                                <Upload className="text-blue-600" size={14} />
-                                {selectedModel === 'wanx2.1-imageedit' ? '输入图像' : '草图图像'}
-                            </label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                                id="input-image-upload"
-                                required
-                            />
-                            {inputImage ? (
-                                <div className="relative group">
-                                    <img
-                                        src={inputImage}
-                                        alt="草图"
-                                        className="h-16 w-16 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-colors"
-                                        onClick={() => setPreviewImage(inputImage)}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setInputImage(null);
-                                            setInputImageUrl(null);
-                                        }}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <label
-                                    htmlFor="input-image-upload"
-                                    className="h-16 w-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
-                                >
-                                    <Upload className="text-gray-400" size={20} />
-                                </label>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* 提示词 */}
                     <div>
-                        <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                            <Wand2 className="text-gray-500" size={12} />
-                            提示词
-                        </label>
-                        <textarea
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            placeholder="描述想要生成的图像，例如：北欧极简风格的客厅"
-                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                            rows="3"
-                            required
+                        <label className="text-xs font-medium text-gray-600 mb-1.5 block">数量</label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="4"
+                            value={n}
+                            onChange={(e) => setN(parseInt(e.target.value) || 1)}
+                            className="w-full bg-gradient-to-br from-white to-gray-50 border border-gray-200 px-3 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all shadow-sm hover:shadow"
                         />
                     </div>
+                </div>
 
-                    {/* 高级设置 */}
-                    <div className="border-t border-gray-200 pt-3">
-                        <button
-                            type="button"
-                            onClick={() => setShowAdvanced(!showAdvanced)}
-                            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors"
-                        >
-                            <Settings2 size={14} />
-                            高级设置
-                            {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
+                {/* 图像上传区域 */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                            <Upload className="text-blue-600" size={14} />
+                            {selectedModel === 'wanx2.1-imageedit' ? '输入图像' : '草图图像'}
+                        </label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            id="input-image-upload"
+                            required
+                        />
+                        {inputImage ? (
+                            <div className="relative group">
+                                <img
+                                    src={inputImage}
+                                    alt="草图"
+                                    className="h-8 w-auto object-cover rounded cursor-pointer"
+                                    onClick={() => setPreviewImage(inputImage)}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setInputImage(null);
+                                        setInputImageUrl(null);
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ) : (
+                            <label
+                                htmlFor="input-image-upload"
+                                className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
+                            >
+                                <Upload className="text-gray-400" size={14} />
+                                <span className="text-xs text-gray-500">点击上传</span>
+                            </label>
+                        )}
+                    </div>
+                </div>
 
-                        {showAdvanced && (
-                            <div className="mt-3 space-y-3">
+                {/* 操作按钮 */}
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${showAdvanced ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-150'}`}
+                    >
+                        <Settings2 size={16} className="inline mr-2" />
+                        {showAdvanced ? '收起设置' : '高级设置'}
+                    </button>
+                    
+                    <button
+                        type="submit"
+                        disabled={isGenerating}
+                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                <span>生成中...</span>
+                            </>
+                        ) : (
+                            <>
+                                <PenTool size={18} />
+                                <span>生成图像</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* 高级设置 */}
+                {showAdvanced && (
+                    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 border border-gray-200 space-y-4 animate-in slide-in-from-top-2 duration-200">
                                 {selectedModel === 'wanx-sketch-to-image-lite' ? (
                                     <>
                                         <div>
@@ -343,21 +353,9 @@ export const SketchToImage = ({ onGenerate, isGenerating }) => {
                                         </div>
                                     </>
                                 )}
-                            </div>
-                        )}
                     </div>
-
-                    {/* 提交按钮 */}
-                    <button
-                        type="submit"
-                        disabled={isGenerating}
-                        className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                    >
-                        <PenTool size={18} />
-                        {isGenerating ? '生成中...' : '开始生成'}
-                    </button>
-                </form>
-            </div>
+                )}
+            </form>
 
             {/* 图片预览弹窗 */}
             {previewImage && (
