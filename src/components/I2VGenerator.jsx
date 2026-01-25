@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Wand2, Monitor, ChevronDown, Sparkles, Video, Image as ImageIcon, Music, Settings2, ShieldCheck, Hash, Layers } from 'lucide-react';
+import { Wand2, Monitor, ChevronDown, Sparkles, Video, Image as ImageIcon, Music, Settings2, ShieldCheck, Hash, Layers, Upload, X } from 'lucide-react';
 import { I2V_MODELS, RESOLUTION_LABELS, VIDEO_EFFECT_TEMPLATES } from '../config/models';
 
 const I2VGenerator = ({ onGenerate, isGenerating }) => {
     const defaultModel = I2V_MODELS[0];
     const [prompt, setPrompt] = useState('');
-    const [imgInput, setImgInput] = useState({ type: 'url', value: '', file: null }); // Changed to object for input type
+    const [imgInput, setImgInput] = useState({ value: '', file: null }); // File only, no URL
     const [audioInput, setAudioInput] = useState({ type: 'url', value: '', file: null }); // Changed to object for input type
     const [imgPreview, setImgPreview] = useState(''); // For image preview
     const [audioPreview, setAudioPreview] = useState(''); // For audio preview
@@ -81,7 +81,7 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
             if (file.type.startsWith('image/')) {
                 try {
                     const base64 = await convertFileToBase64(file);
-                    setImgInput({ type: 'file', value: base64, file });
+                    setImgInput({ value: base64, file });
                     setImgPreview(URL.createObjectURL(file));
                 } catch (error) {
                     console.error('Error converting image to base64:', error);
@@ -117,12 +117,8 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
         let imgValue = '';
         let audioValue = '';
 
-        // Prepare image value based on input type
-        if (imgInput.type === 'url') {
-            imgValue = imgInput.value.trim();
-        } else if (imgInput.type === 'file') {
-            imgValue = imgInput.value; // Already base64
-        }
+        // Prepare image value (always from file upload)
+        imgValue = imgInput.value; // Already base64 from file upload
 
         // Prepare audio value based on input type
         if (audioInput.type === 'url') {
@@ -321,24 +317,60 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
                                 </>
                             )}
                             
-                            {/* Image Input Type Toggle */}
-                            <label className="text-xs font-medium text-gray-600 whitespace-nowrap">上传图片</label>
-                            <div className="flex bg-white p-1 rounded-lg border border-gray-200 gap-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setImgInput({...imgInput, type: 'url'})}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'url' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
+                            {/* Image Upload Button */}
+                            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                                <ImageIcon className="text-blue-600" size={14} />
+                                输入图像
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageFileChange}
+                                className="hidden"
+                                id="input-image-upload"
+                                required
+                            />
+                            {imgPreview ? (
+                                <div className="relative group">
+                                    <img 
+                                        src={imgPreview} 
+                                        alt="输入预览" 
+                                        className="h-8 w-auto object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                        onClick={() => {
+                                            const modal = document.createElement('div');
+                                            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                            modal.onclick = () => modal.remove();
+                                            
+                                            const img = document.createElement('img');
+                                            img.src = imgPreview;
+                                            img.className = 'max-w-full max-h-full object-contain rounded-lg';
+                                            img.onclick = (e) => e.stopPropagation();
+                                            
+                                            modal.appendChild(img);
+                                            document.body.appendChild(modal);
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setImgPreview('');
+                                            setImgInput({ value: '', file: null });
+                                        }}
+                                        className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label 
+                                    htmlFor="input-image-upload"
+                                    className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
                                 >
-                                    URL链接
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setImgInput({...imgInput, type: 'file'})}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'file' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
-                                >
-                                    文件上传
-                                </button>
-                            </div>
+                                    <Upload className="text-gray-400" size={14} />
+                                    <span className="text-xs text-gray-500">点击上传</span>
+                                </label>
+                            )}
 
                             <div className="h-6 w-px bg-gray-300"></div>
 
@@ -368,81 +400,6 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
                                 视频特效
                             </button>
                         </div>
-
-                        {/* Image Input Field */}
-                        {imgInput.type === 'url' ? (
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={imgInput.value}
-                                    onChange={(e) => {
-                                        const newValue = e.target.value;
-                                        setImgInput({...imgInput, value: newValue});
-                                        setImgPreview(newValue);
-                                    }}
-                                    placeholder="输入图片的公网 URL 地址..."
-                                    className="w-full bg-white border border-gray-200 px-4 py-2.5 rounded-lg text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
-                                    required
-                                />
-                                {imgPreview && !imgInput.file && (
-                                    <div className="mt-2 flex justify-center">
-                                        <img 
-                                            src={imgPreview} 
-                                            alt="Preview" 
-                                            className="max-h-20 max-w-full object-contain rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                                            onClick={() => {
-                                                const modal = document.createElement('div');
-                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
-                                                modal.onclick = () => modal.remove();
-                                                
-                                                const img = document.createElement('img');
-                                                img.src = imgPreview;
-                                                img.className = 'max-w-full max-h-full object-contain rounded-lg';
-                                                img.onclick = (e) => e.stopPropagation();
-                                                
-                                                modal.appendChild(img);
-                                                document.body.appendChild(modal);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="relative">
-                                <label className="w-full bg-white border border-gray-200 rounded-lg px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageFileChange}
-                                        className="hidden"
-                                    />
-                                    <ImageIcon className="text-gray-400 mb-2" size={32} />
-                                    <span className="text-sm font-medium text-gray-500">点击选择图片文件</span>
-                                </label>
-                                {imgPreview && (
-                                    <div className="mt-2 flex justify-center">
-                                        <img 
-                                            src={imgPreview} 
-                                            alt="Preview" 
-                                            className="max-h-20 max-w-full object-contain rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                                            onClick={() => {
-                                                const modal = document.createElement('div');
-                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
-                                                modal.onclick = () => modal.remove();
-                                                
-                                                const img = document.createElement('img');
-                                                img.src = imgPreview;
-                                                img.className = 'max-w-full max-h-full object-contain rounded-lg';
-                                                img.onclick = (e) => e.stopPropagation();
-                                                
-                                                modal.appendChild(img);
-                                                document.body.appendChild(modal);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </div>
                 </div>
 
