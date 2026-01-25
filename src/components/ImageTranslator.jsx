@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Languages, Upload, X, Settings2, ChevronDown, ChevronUp, Sparkles, ArrowRight, Image } from 'lucide-react';
-import { uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 import { IMAGE_TRANSLATION_MODELS } from '../config/models';
 
 const LANGUAGES = [
@@ -20,7 +20,8 @@ const LANGUAGES = [
     { code: 'ar', name: '阿拉伯语', flag: '🇸🇦' }
 ];
 
-export const ImageTranslator = ({ onGenerate, isGenerating }) => {
+export const ImageTranslator = ({ onGenerate, isGenerating, apiKey }) => {
+    const [uploading, setUploading] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
@@ -35,15 +36,16 @@ export const ImageTranslator = ({ onGenerate, isGenerating }) => {
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => setInputImage(e.target.result);
-            reader.readAsDataURL(file);
+            setInputImage(URL.createObjectURL(file));
             
             try {
-                const url = await uploadFileToTempServer(file);
+                setUploading(true);
+                const url = await uploadFileSimple(file, apiKey, selectedModel);
                 setInputImageUrl(url);
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                setUploading(false);
             }
         }
     };

@@ -3,7 +3,7 @@ import { Play } from 'lucide-react';
 import MediaViewer from './MediaViewer';
 import TaskCard from './TaskCard';
 
-const HistoryGallery = ({ tasks, onDelete, onRetry }) => {
+const HistoryGallery = ({ tasks, onDelete, onRetry, onUpdate }) => {
     const [viewerMedia, setViewerMedia] = useState(null);
 
     const currentIndex = viewerMedia ? tasks.findIndex(t => t.taskId === viewerMedia.taskId) : -1;
@@ -47,6 +47,7 @@ const HistoryGallery = ({ tasks, onDelete, onRetry }) => {
                         onView={setViewerMedia}
                         onDelete={onDelete}
                         onRetry={onRetry}
+                        onUpdate={onUpdate}
                     />
                 ))}
             </div>

@@ -1,10 +1,34 @@
+import { API_BASE_URL } from '../config/apiConfig';
+
 /**
  * Generic file upload utility function
- * Since there's no backend upload server, convert file to base64 directly
- * For large images, compress before converting to base64
+ * 支持两种上传方式：
+ * 1. 阿里云临时存储（推荐，支持大文件）
+ * 2. Base64 编码（备用，适用于小文件）
+ * 
+ * @param {File} file - 要上传的文件
+ * @param {Object} options - 配置选项
+ * @param {string} options.apiKey - 阿里云 API Key（使用临时存储时必须）
+ * @param {string} options.modelName - 模型名称（使用临时存储时必须）
+ * @param {boolean} options.useOss - 是否使用临时存储，默认 true
+ * @returns {Promise<string>} 返回 oss:// URL 或 base64 字符串
  */
-export const uploadFileToTempServer = async (file) => {
-  // Check if file needs compression (> 5MB or images for wan2.6-image)
+export const uploadFileToTempServer = async (file, options = {}) => {
+  const { apiKey, modelName, useOss = true } = options;
+  
+  // 如果提供了 apiKey 和 modelName，优先使用阿里云临时存储
+  if (useOss && apiKey && modelName) {
+    try {
+      const ossUrl = await uploadToAliyunOss(file, apiKey, modelName);
+      console.log('✅ 文件已上传到阿里云临时存储:', ossUrl);
+      return ossUrl;
+    } catch (error) {
+      console.warn('⚠️ 阿里云临时存储上传失败，回退到 base64:', error.message);
+      // 回退到 base64
+    }
+  }
+  
+  // 回退方案：使用 base64
   const MAX_BASE64_SIZE = 8 * 1024 * 1024; // 8MB limit (留2MB buffer)
   
   if (file.type.startsWith('image/') && file.size > MAX_BASE64_SIZE) {
@@ -178,4 +202,102 @@ export const handleFileUpload = (event, acceptedTypes, maxSize, setter) => {
   } else {
     alert(validation.error);
   }
+};
+
+// ==================== 阿里云临时存储上传功能 ====================
+
+/**
+ * 获取文件上传凭证
+ * @param {string} apiKey - 阿里云 API Key
+ * @param {string} modelName - 模型名称
+ * @returns {Promise<Object>} 上传凭证数据
+ */
+const getUploadPolicy = async (apiKey, modelName) => {
+  const url = `${API_BASE_URL}/uploads?action=getPolicy&model=${encodeURIComponent(modelName)}`;
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`获取上传凭证失败: ${errorData.message || response.status}`);
+  }
+  
+  const result = await response.json();
+  return result.data;
+};
+
+/**
+ * 上传文件到阿里云 OSS 临时存储
+ * @param {Object} policyData - 上传凭证数据
+ * @param {File} file - 要上传的文件
+ * @returns {Promise<string>} oss:// URL
+ */
+const uploadFileToOss = async (policyData, file) => {
+  const key = `${policyData.upload_dir}/${file.name}`;
+  
+  const formData = new FormData();
+  formData.append('OSSAccessKeyId', policyData.oss_access_key_id);
+  formData.append('Signature', policyData.signature);
+  formData.append('policy', policyData.policy);
+  formData.append('x-oss-object-acl', policyData.x_oss_object_acl);
+  formData.append('x-oss-forbid-overwrite', policyData.x_oss_forbid_overwrite);
+  formData.append('key', key);
+  formData.append('success_action_status', '200');
+  formData.append('file', file); // file 必须是最后一个表单域
+  
+  const response = await fetch(policyData.upload_host, {
+    method: 'POST',
+    body: formData
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`文件上传失败: ${errorText || response.status}`);
+  }
+  
+  return `oss://${key}`;
+};
+
+/**
+ * 上传文件到阿里云临时存储并获取 oss:// URL
+ * 
+ * 使用限制：
+ * - 文件与模型绑定：上传时指定的模型须与后续调用的模型一致
+ * - 文件有效期：48小时
+ * - 限流：100 QPS
+ * 
+ * @param {File} file - 要上传的文件
+ * @param {string} apiKey - 阿里云 API Key
+ * @param {string} modelName - 模型名称
+ * @returns {Promise<string>} oss:// URL
+ */
+export const uploadToAliyunOss = async (file, apiKey, modelName) => {
+  // 1. 获取上传凭证
+  const policyData = await getUploadPolicy(apiKey, modelName);
+  
+  // 2. 检查文件大小限制
+  const maxSizeMB = parseInt(policyData.max_file_size_mb) || 100;
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    throw new Error(`文件大小超过限制: 最大 ${maxSizeMB}MB`);
+  }
+  
+  // 3. 上传文件到 OSS
+  const ossUrl = await uploadFileToOss(policyData, file);
+  
+  return ossUrl;
+};
+
+/**
+ * 检查是否为 OSS URL
+ * @param {string} url - 要检查的 URL
+ * @returns {boolean}
+ */
+export const isOssUrl = (url) => {
+  return typeof url === 'string' && url.startsWith('oss://');
 };

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Wand2, Monitor, ChevronDown, Sparkles, Video, Settings2, ShieldCheck, Hash, Layers, Volume2, Mic, Upload } from 'lucide-react';
 import { VIDEO_MODELS, RESOLUTION_LABELS } from '../config/models';
-import { processFileInput, isValidUrl } from '../utils/fileUpload';
+import { isValidUrl } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
-const VideoGenerator = ({ onGenerate, isGenerating }) => {
+const VideoGenerator = ({ onGenerate, isGenerating, apiKey }) => {
+    const [uploadingAudio, setUploadingAudio] = useState(false);
     const defaultModel = VIDEO_MODELS[0];
     const [prompt, setPrompt] = useState('');
     const [negativePrompt, setNegativePrompt] = useState('');
@@ -49,11 +51,17 @@ const VideoGenerator = ({ onGenerate, isGenerating }) => {
         if (file) {
             if (file.type.startsWith('audio/') || file.name.toLowerCase().endsWith('.mp3') || file.name.toLowerCase().endsWith('.wav')) {
                 try {
-                    const base64 = await processFileInput(file, 'audio');
-                    setAudioInput({ type: 'file', value: base64, file });
+                    setUploadingAudio(true);
+                    setAudioInput({ type: 'file', value: '', file });
+                    // 视频生成 API 必须使用 URL
+                    const url = await uploadFileSimple(file, apiKey, selectedModelId, { requireUrl: true });
+                    console.log('✅ 音频上传成功:', url);
+                    setAudioInput({ type: 'file', value: url, file });
                 } catch (error) {
-                    console.error('Error processing audio:', error);
-                    alert('音频处理失败');
+                    console.error('Error uploading audio:', error);
+                    alert('音频上传失败: ' + error.message);
+                } finally {
+                    setUploadingAudio(false);
                 }
             } else {
                 alert('请选择有效的音频文件 (mp3, wav等)');
@@ -75,16 +83,8 @@ const VideoGenerator = ({ onGenerate, isGenerating }) => {
         e.preventDefault();
         if (!prompt.trim()) return;
 
-        // Process audio input if provided
-        let audioValue = '';
-        if (audioInput.value.trim() && currentModelConfig.capabilities?.audio) {
-            try {
-                audioValue = await processFileInput(audioInput, 'audio');
-            } catch (error) {
-                alert(`音频处理错误: ${error.message}`);
-                return;
-            }
-        }
+        // Get audio value if provided
+        const audioValue = audioInput.value.trim();
 
         const params = {
             model: selectedModelId,

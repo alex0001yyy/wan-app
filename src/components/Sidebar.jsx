@@ -4,7 +4,7 @@ import {
     ChevronDown, ChevronRight, Wand2, Film, Scissors,
     Palette, Expand, Type, Music, Smile, Shirt,
     Settings, Key, ExternalLink, Menu, Eraser, Maximize,
-    PenTool, SmilePlus
+    PenTool, SmilePlus, Sparkles
 } from 'lucide-react';
 
 const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
@@ -16,7 +16,9 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
             id: 'video-studio',
             items: [
                 { id: 'video-t2v', label: '文生视频', icon: <Wand2 size={16} /> },
-                { id: 'video-i2v', label: '图生视频', icon: <Film size={16} /> },
+                { id: 'video-i2v', label: '首帧生视频', icon: <Film size={16} /> },
+                { id: 'video-kf2v', label: '首尾帧生视频', icon: <Film size={16} /> },
+                { id: 'video-effect', label: '视频特效', icon: <Sparkles size={16} /> },
                 { id: 'video-r2v', label: '参考生视频', icon: <Video size={16} /> },
                 { id: 'video-edit', label: '视频编辑', icon: <Scissors size={16} /> },
             ]

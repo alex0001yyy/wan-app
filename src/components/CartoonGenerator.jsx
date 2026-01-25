@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Smile, Upload, X, Wand2, Hash, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
-import { uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
-export const CartoonGenerator = ({ onGenerate, isGenerating }) => {
+export const CartoonGenerator = ({ onGenerate, isGenerating, apiKey }) => {
+    const MODEL_ID = 'wanx2.1-imageedit';
+    const [uploading, setUploading] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
@@ -26,17 +28,16 @@ export const CartoonGenerator = ({ onGenerate, isGenerating }) => {
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setInputImage(e.target.result);
-            };
-            reader.readAsDataURL(file);
+            setInputImage(URL.createObjectURL(file));
             
             try {
-                const url = await uploadFileToTempServer(file);
+                setUploading(true);
+                const url = await uploadFileSimple(file, apiKey, MODEL_ID);
                 setInputImageUrl(url);
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                setUploading(false);
             }
         }
     };
@@ -133,6 +134,11 @@ export const CartoonGenerator = ({ onGenerate, isGenerating }) => {
                                     >
                                         <X size={12} />
                                     </button>
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center">
+                                            <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <label

@@ -1,9 +1,10 @@
-// Define protocols
+﻿// Define protocols
 export const PROTOCOLS = {
     SYNC_MULTIMODAL: 'sync_multimodal',    // Qwen-VL-Plus/Max
     ASYNC_T2I: 'async_t2i',               // Text-to-Image
     ASYNC_VIDEO: 'async_video',           // Text-to-Video
     ASYNC_I2V: 'async_i2v',               // Image-to-Video
+    ASYNC_KF2V: 'async_kf2v',             // Keyframe-to-Video (首尾帧生视频)
     ASYNC_R2V: 'async_r2v',                // Reference-to-Video
     ASYNC_VACE_PLUS: 'async_vace_plus',     // Video Editing Unified Model
     ASYNC_S2V: 'async_s2v'                 // Speech-to-Video (Digital Human)
@@ -29,11 +30,22 @@ export const RESOLUTION_LABELS = {
     '480P': '480P (SD)',
     '720P': '720P (HD)', 
     '1080P': '1080P (FHD)',
-    '1280*720': '1280*720 (16:9)',
-    '720*1280': '720*1280 (9:16)',
-    '960*960': '960*960 (1:1)',
-    '832*1088': '832*1088 (3:4)',
-    '1088*832': '1088*832 (4:3)'
+    // 480P 档位具体尺寸
+    '832*480': '832×480 (16:9)',
+    '480*832': '480×832 (9:16)',
+    '624*624': '624×624 (1:1)',
+    // 720P 档位具体尺寸
+    '1280*720': '1280×720 (16:9)',
+    '720*1280': '720×1280 (9:16)',
+    '960*960': '960×960 (1:1)',
+    '832*1088': '832×1088 (3:4)',
+    '1088*832': '1088×832 (4:3)',
+    // 1080P 档位具体尺寸
+    '1920*1080': '1920×1080 (16:9)',
+    '1080*1920': '1080×1920 (9:16)',
+    '1440*1440': '1440×1440 (1:1)',
+    '1632*1248': '1632×1248 (4:3)',
+    '1248*1632': '1248×1632 (3:4)'
 };
 
 // Video Models Configuration
@@ -105,8 +117,8 @@ export const VIDEO_MODELS = [
         endpoint: '/services/aigc/video-generation/video-synthesis',
         requestFormat: 'videoGeneration',
         outputType: OUTPUT_TYPES.VIDEO,
-        defaultRes: '720P',
-        resolutions: ['480P', '720P'],
+        defaultRes: '1280*720',
+        resolutions: ['832*480', '480*832', '624*624', '1280*720', '720*1280', '960*960', '1088*832', '832*1088'],
         capabilities: {
             prompt_extend: true,
             negative_prompt: true,
@@ -123,8 +135,8 @@ export const VIDEO_MODELS = [
         endpoint: '/services/aigc/video-generation/video-synthesis',
         requestFormat: 'videoGeneration',
         outputType: OUTPUT_TYPES.VIDEO,
-        defaultRes: '720P',
-        resolutions: ['720P'],
+        defaultRes: '1280*720',
+        resolutions: ['1280*720', '720*1280', '960*960', '1088*832', '832*1088'],
         capabilities: {
             prompt_extend: true,
             negative_prompt: true,
@@ -153,7 +165,7 @@ export const I2V_MODELS = [
             audio: true,
             negative_prompt: true,
             seed: true,
-            frame_selection: true // Support for keyframe-to-video
+            last_frame: false // 不支持尾帧，只有KF2V模型支持
         }
     },
     {
@@ -173,7 +185,7 @@ export const I2V_MODELS = [
             audio: true,
             negative_prompt: true,
             seed: true,
-            frame_selection: true // Support for keyframe-to-video
+            last_frame: false // 不支持尾帧，只有KF2V模型支持
         }
     },
     {
@@ -185,15 +197,16 @@ export const I2V_MODELS = [
         endpoint: '/services/aigc/video-generation/video-synthesis',
         requestFormat: 'imageToVideo',
         outputType: OUTPUT_TYPES.VIDEO,
-        defaultRes: '1080P',
-        resolutions: ['480P', '720P', '1080P'],
+        defaultRes: '1280*720',
+        resolutions: ['832*480', '480*832', '624*624', '1280*720', '720*1280', '960*960', '1088*832', '832*1088', '1920*1080', '1080*1920', '1440*1440'],
         capabilities: {
             prompt_extend: true,
             audio: true,
             negative_prompt: true,
             seed: true,
             shot_type: false,
-            frame_selection: true // Support for keyframe-to-video
+            last_frame: false, // 不支持尾帧
+            duration: false // 不支持自定义时长
         }
     },
     {
@@ -205,12 +218,130 @@ export const I2V_MODELS = [
         endpoint: '/services/aigc/video-generation/video-synthesis',
         requestFormat: 'imageToVideo',
         outputType: OUTPUT_TYPES.VIDEO,
+        defaultRes: '1280*720',
+        resolutions: ['832*480', '480*832', '624*624', '1280*720', '720*1280', '960*960', '1088*832', '832*1088', '1920*1080', '1080*1920', '1440*1440'],
+        capabilities: {
+            prompt_extend: true,
+            negative_prompt: true,
+            last_frame: false, // 不支持尾帧
+            duration: false // 不支持自定义时长
+        }
+    }
+];
+
+// Video Effect Models Configuration (视频特效专用模型)
+export const VIDEO_EFFECT_MODELS = [
+    // 首帧生视频特效模型
+    {
+        id: 'wanx2.1-i2v-plus',
+        name: '万相2.1-I2V (Plus)',
+        provider: '阿里通义实验室',
+        description: '图生视频专业版，支持全部首帧特效模板',
+        protocol: PROTOCOLS.ASYNC_I2V,
+        endpoint: '/services/aigc/image2video/video-synthesis',
+        requestFormat: 'videoEffect',
+        outputType: OUTPUT_TYPES.VIDEO,
+        defaultRes: '720P',
+        resolutions: ['480P', '720P'],
+        effectType: 'i2v', // 首帧特效
+        capabilities: {
+            template: true,
+            prompt_extend: true,
+            // 支持的特效模板列表
+            supportedTemplates: [
+                // 通用特效
+                'squish', 'rotation', 'poke', 'inflate', 'dissolve', 'melt', 'icecream',
+                // 单人特效
+                'carousel', 'singleheart', 'dance1', 'dance2', 'dance3', 'dance4', 'dance5',
+                'mermaid', 'graduation', 'dragon', 'money', 'jellyfish', 'pupil',
+                // 单人/动物特效
+                'flying', 'rose', 'crystalrose',
+                // 双人特效
+                'hug', 'frenchkiss', 'coupleheart'
+            ]
+        }
+    },
+    {
+        id: 'wanx2.1-i2v-turbo',
+        name: '万相2.1-I2V (Turbo)',
+        provider: '阿里通义实验室',
+        description: '图生视频极速版，支持部分首帧特效模板',
+        protocol: PROTOCOLS.ASYNC_I2V,
+        endpoint: '/services/aigc/image2video/video-synthesis',
+        requestFormat: 'videoEffect',
+        outputType: OUTPUT_TYPES.VIDEO,
+        defaultRes: '720P',
+        resolutions: ['480P', '720P'],
+        effectType: 'i2v', // 首帧特效
+        capabilities: {
+            template: true,
+            prompt_extend: true,
+            // 支持的特效模板列表（Turbo版支持较少）
+            supportedTemplates: [
+                'squish', 'rotation', 'poke', 'inflate', 'dissolve',
+                'carousel', 'singleheart',
+                'flying', 'rose', 'crystalrose',
+                'hug', 'frenchkiss', 'coupleheart'
+            ]
+        }
+    },
+    // 人物变装特效模型（基于首尾帧模型训练，但只需首帧）
+    {
+        id: 'wanx2.1-kf2v-plus',
+        name: '万相2.1 (人物变装)',
+        provider: '阿里通义实验室',
+        description: '人物变装特效，支持汉服、机甲、杂志封面等风格',
+        protocol: PROTOCOLS.ASYNC_KF2V,
+        endpoint: '/services/aigc/image2video/video-synthesis',
+        requestFormat: 'videoEffect',
+        outputType: OUTPUT_TYPES.VIDEO,
+        defaultRes: '720P',
+        resolutions: ['720P'],
+        effectType: 'kf2v',
+        capabilities: {
+            template: true,
+            prompt_extend: true,
+            supportedTemplates: ['hanfu-1', 'solaron', 'magazine', 'mech1', 'mech2']
+        }
+    }
+];
+
+// Keyframe-to-Video Models Configuration (首尾帧生视频)
+export const KF2V_MODELS = [
+    {
+        id: 'wan2.2-kf2v-flash',
+        name: '万相2.2-KF2V (Flash)',
+        provider: '阿里通义实验室',
+        description: '万相2.2极速版，较上代模型速度提升50%，稳定性与成功率全面提升',
+        protocol: PROTOCOLS.ASYNC_KF2V,
+        endpoint: '/services/aigc/image2video/video-synthesis',
+        requestFormat: 'keyframeToVideo',
+        outputType: OUTPUT_TYPES.VIDEO,
         defaultRes: '720P',
         resolutions: ['480P', '720P', '1080P'],
         capabilities: {
             prompt_extend: true,
             negative_prompt: true,
-            frame_selection: false
+            seed: true,
+            last_frame: true // 支持尾帧
+        }
+    },
+    {
+        id: 'wanx2.1-kf2v-plus',
+        name: '万相2.1-KF2V (Plus)',
+        provider: '阿里通义实验室',
+        description: '万相2.1专业版，复杂运动，物理规律还原，画面细腻',
+        protocol: PROTOCOLS.ASYNC_KF2V,
+        endpoint: '/services/aigc/image2video/video-synthesis',
+        requestFormat: 'keyframeToVideo',
+        outputType: OUTPUT_TYPES.VIDEO,
+        defaultRes: '720P',
+        resolutions: ['720P'],
+        capabilities: {
+            prompt_extend: true,
+            negative_prompt: true,
+            seed: true,
+            last_frame: true // 支持尾帧
         }
     }
 ];
@@ -226,14 +357,21 @@ export const R2V_MODELS = [
         endpoint: '/services/aigc/video-generation/video-synthesis',
         requestFormat: 'referenceToVideo',
         outputType: OUTPUT_TYPES.VIDEO,
-        defaultRes: '1080P',
-        resolutions: ['720P', '1080P'],
+        defaultRes: '1920*1080',
+        // 分辨率必须是具体数值，不能是 720P/1080P
+        resolutions: [
+            // 720P 档位
+            '1280*720', '720*1280', '960*960', '1088*832', '832*1088',
+            // 1080P 档位
+            '1920*1080', '1080*1920', '1440*1440', '1632*1248', '1248*1632'
+        ],
         capabilities: {
             shot_type: true,
             negative_prompt: true,
             seed: true,
             multi_character: true,
-            watermark: true
+            watermark: true,
+            duration: true // 支持 5/10 秒
         }
     }
 ];
@@ -256,7 +394,7 @@ export const VACE_PLUS_MODELS = [
             obj_or_bg: true,
             seed: true,
             watermark: true,
-            functions: ['image_reference', 'video_remap', 'local_edit', 'video_expand', 'video_extend']
+            functions: ['image_reference', 'video_repainting', 'video_edit', 'video_outpainting', 'video_extension']
         }
     }
 ];
@@ -928,9 +1066,14 @@ export const IMAGE_TRANSLATION_MODELS = [
 ];
 
 // Combined models array for lookup
+// 注意顺序：KF2V_MODELS 必须在 VIDEO_EFFECT_MODELS 之前，
+// 因为 wanx2.1-kf2v-plus 同时存在于两个数组中，
+// KF2V 场景需要使用 keyframeToVideo 格式
 const ALL_MODELS = [
     ...VIDEO_MODELS,
     ...I2V_MODELS,
+    ...KF2V_MODELS,           // 必须在 VIDEO_EFFECT_MODELS 之前
+    ...VIDEO_EFFECT_MODELS,
     ...R2V_MODELS,
     ...VACE_PLUS_MODELS,
     ...IMAGE_MODELS,
@@ -997,11 +1140,11 @@ export const VIDEO_EFFECT_TEMPLATES = {
         { value: 'frenchkiss', label: '唇齿相依 (French Kiss)' },
         { value: 'coupleheart', label: '双倍心动 (Couple Heart)' }
     ],
-    // Single Frame to Video Effects (首尾帧特效)
+    // Person Transformation Effects (人物变装特效)
     kf2v: [
-        { value: 'hanfu-1', label: '唐韵翩然 (Hanfu 1)' },
+        { value: 'hanfu-1', label: '唐韵翩然 (汉服)' },
         { value: 'solaron', label: '机甲变身 (Solaron)' },
-        { value: 'magazine', label: '闪耀封面 (Magazine)' },
+        { value: 'magazine', label: '闪耀封面 (杂志)' },
         { value: 'mech1', label: '机械觉醒 (Mech 1)' },
         { value: 'mech2', label: '赛博登场 (Mech 2)' }
     ]

@@ -5,6 +5,8 @@ import PageLayout from './components/PageLayout';
 import VideoGenerator from './components/VideoGenerator';
 import ImageGenerator from './components/ImageGenerator';
 import I2VGenerator from './components/I2VGenerator';
+import KF2VGenerator from './components/KF2VGenerator';
+import VideoEffectGenerator from './components/VideoEffectGenerator';
 import R2VGenerator from './components/R2VGenerator';
 import VideoEditor from './components/VideoEditor';
 import ImageEditor from './components/ImageEditor';
@@ -45,7 +47,7 @@ function App() {
   const [activeMenu, setActiveMenu] = useState('video-t2v');
 
   // Unified logic for all tasks
-  const { tasks, isGenerating, runTask, retryTask, deleteTask } = useTasks(apiKey);
+  const { tasks, isGenerating, runTask, retryTask, deleteTask, updateTask } = useTasks(apiKey);
 
   const handleSaveKey = (key) => {
     setApiKey(key);
@@ -83,6 +85,9 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/text-to-video-api-reference"
           />
         );
 
@@ -99,14 +104,16 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
       case 'video-i2v':
         return (
           <PageLayout
-            title="图生视频"
-            description="上传参考图，赋予图像动态生命 (Wan 2.6 支持多镜头与音频驱动)"
+            title="首帧生视频"
+            description="上传图片作为首帧，生成动态视频"
             tasks={tasks}
             filterType="i2v"
             generator={I2VGenerator}
@@ -114,6 +121,45 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/image-to-video-api-reference"
+          />
+        );
+
+      case 'video-kf2v':
+        return (
+          <PageLayout
+            title="首尾帧生视频"
+            description="上传首尾帧图片，生成平滑过渡视频"
+            tasks={tasks}
+            filterType="kf2v"
+            generator={KF2VGenerator}
+            onGenerate={handleAction}
+            isGenerating={isGenerating}
+            onDelete={deleteTask}
+            onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/image-to-video-by-first-and-last-frame-api-reference"
+          />
+        );
+
+      case 'video-effect':
+        return (
+          <PageLayout
+            title="视频特效"
+            description="选择特效模板，一键生成动态视频效果"
+            tasks={tasks}
+            filterType="video-effect"
+            generator={VideoEffectGenerator}
+            onGenerate={handleAction}
+            isGenerating={isGenerating}
+            onDelete={deleteTask}
+            onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/wanx-video-effects"
           />
         );
 
@@ -129,6 +175,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -144,6 +192,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -159,6 +209,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -174,6 +226,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -189,6 +243,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -204,6 +260,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -219,6 +277,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -234,6 +294,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -249,6 +311,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -264,6 +328,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -279,6 +345,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -295,6 +363,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -310,6 +380,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -325,6 +397,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -340,6 +414,8 @@ function App() {
             isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
           />
         );
 
@@ -368,6 +444,7 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         currentKey={apiKey}
         onSave={handleSaveKey}
+        onTasksImported={() => window.location.reload()}
       />
     </Layout>
   );

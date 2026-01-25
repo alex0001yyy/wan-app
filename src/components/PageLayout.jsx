@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import HistoryGallery from './HistoryGallery';
 
 /**
@@ -15,7 +15,10 @@ const PageLayout = ({
     onGenerate, 
     isGenerating,
     onDelete,
-    onRetry
+    onRetry,
+    onUpdate,
+    apiKey,  // 添加 apiKey 参数
+    docUrl  // 文档链接
 }) => {
     const [historyCollapsed, setHistoryCollapsed] = useState(false);
     
@@ -29,7 +32,20 @@ const PageLayout = ({
         <div className="flex flex-col gap-4">
             {/* Page Header */}
             <div className="bg-white/60 backdrop-blur-sm border-b border-gray-100 pb-3">
-                <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                    {docUrl && (
+                        <a
+                            href={docUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                            <ExternalLink size={14} />
+                            <span>参考文档</span>
+                        </a>
+                    )}
+                </div>
                 <p className="text-xs text-gray-500 mt-1">{description}</p>
             </div>
 
@@ -37,7 +53,8 @@ const PageLayout = ({
             <div className="bg-white/80 backdrop-blur rounded-xl border border-gray-100 shadow-sm">
                 <GeneratorComponent 
                     onGenerate={(params) => onGenerate(params, filterType)} 
-                    isGenerating={isGenerating} 
+                    isGenerating={isGenerating}
+                    apiKey={apiKey}
                 />
             </div>
 
@@ -64,7 +81,7 @@ const PageLayout = ({
                 
                 {!historyCollapsed && (
                     <div className="px-5 pb-5">
-                        <HistoryGallery tasks={filteredTasks} onDelete={onDelete} onRetry={onRetry} />
+                        <HistoryGallery tasks={filteredTasks} onDelete={onDelete} onRetry={onRetry} onUpdate={onUpdate} />
                     </div>
                 )}
             </div>

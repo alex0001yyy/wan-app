@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Palette, Upload, Settings2, Sparkles, X, Wand2, Hash, ChevronDown, ChevronUp } from 'lucide-react';
-import { uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
 const STYLIZATION_MODELS = [
     {
@@ -46,7 +46,8 @@ const PORTRAIT_STYLES = [
     { index: -1, name: '自定义风格', description: '使用参考图片的风格' }
 ];
 
-export const ImageStylization = ({ onGenerate, isGenerating }) => {
+export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
+    const [uploading, setUploading] = useState({ input: false, styleRef: false });
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
@@ -86,19 +87,17 @@ export const ImageStylization = ({ onGenerate, isGenerating }) => {
     const handleImageUpload = async (e, isStyleRef = false) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64 = e.target.result;
-                if (isStyleRef) {
-                    setStyleRefImage(base64);
-                } else {
-                    setInputImage(base64);
-                }
-            };
-            reader.readAsDataURL(file);
+            const preview = URL.createObjectURL(file);
+            if (isStyleRef) {
+                setStyleRefImage(preview);
+            } else {
+                setInputImage(preview);
+            }
             
             try {
-                const url = await uploadFileToTempServer(file);
+                const uploadKey = isStyleRef ? 'styleRef' : 'input';
+                setUploading(prev => ({ ...prev, [uploadKey]: true }));
+                const url = await uploadFileSimple(file, apiKey, selectedModel);
                 if (isStyleRef) {
                     setStyleRefImageUrl(url);
                 } else {
@@ -106,6 +105,9 @@ export const ImageStylization = ({ onGenerate, isGenerating }) => {
                 }
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                const uploadKey = isStyleRef ? 'styleRef' : 'input';
+                setUploading(prev => ({ ...prev, [uploadKey]: false }));
             }
         }
     };

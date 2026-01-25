@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PenTool, Upload, Settings2, Sparkles, X, Wand2, Hash, ChevronDown, ChevronUp, Palette } from 'lucide-react';
-import { uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
 const SKETCH_MODELS = [
     {
@@ -28,7 +28,8 @@ const STYLES = [
 
 const RESOLUTIONS = ['768*768', '1024*1024', '1280*1280'];
 
-export const SketchToImage = ({ onGenerate, isGenerating }) => {
+export const SketchToImage = ({ onGenerate, isGenerating, apiKey }) => {
+    const [uploading, setUploading] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
@@ -57,17 +58,16 @@ export const SketchToImage = ({ onGenerate, isGenerating }) => {
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setInputImage(e.target.result);
-            };
-            reader.readAsDataURL(file);
+            setInputImage(URL.createObjectURL(file));
             
             try {
-                const url = await uploadFileToTempServer(file);
+                setUploading(true);
+                const url = await uploadFileSimple(file, apiKey, selectedModel);
                 setInputImageUrl(url);
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                setUploading(false);
             }
         }
     };

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Image, Upload, X, Settings2, Sparkles, Hash, ChevronDown, ChevronUp, Layers, Plus, Trash2 } from 'lucide-react';
-import { uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
-export const BackgroundGenerator = ({ onGenerate, isGenerating }) => {
+export const BackgroundGenerator = ({ onGenerate, isGenerating, apiKey }) => {
+    const MODEL_ID = 'wanx-background-generation-v2';
+    const [uploading, setUploading] = useState({ base: false, ref: false });
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [baseImage, setBaseImage] = useState(null);
     const [baseImageUrl, setBaseImageUrl] = useState(null);
@@ -22,15 +24,16 @@ export const BackgroundGenerator = ({ onGenerate, isGenerating }) => {
     const handleBaseImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => setBaseImage(e.target.result);
-            reader.readAsDataURL(file);
+            setBaseImage(URL.createObjectURL(file));
             
             try {
-                const url = await uploadFileToTempServer(file);
+                setUploading(prev => ({ ...prev, base: true }));
+                const url = await uploadFileSimple(file, apiKey, MODEL_ID);
                 setBaseImageUrl(url);
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                setUploading(prev => ({ ...prev, base: false }));
             }
         }
     };
@@ -38,15 +41,16 @@ export const BackgroundGenerator = ({ onGenerate, isGenerating }) => {
     const handleRefImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => setRefImage(e.target.result);
-            reader.readAsDataURL(file);
+            setRefImage(URL.createObjectURL(file));
             
             try {
-                const url = await uploadFileToTempServer(file);
+                setUploading(prev => ({ ...prev, ref: true }));
+                const url = await uploadFileSimple(file, apiKey, MODEL_ID);
                 setRefImageUrl(url);
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                setUploading(prev => ({ ...prev, ref: false }));
             }
         }
     };
@@ -54,21 +58,18 @@ export const BackgroundGenerator = ({ onGenerate, isGenerating }) => {
     const handleEdgeUpload = async (e, type) => {
         const files = Array.from(e.target.files);
         for (const file of files) {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const url = await uploadFileToTempServer(file);
-                    const edgeData = { preview: event.target.result, url, prompt: '' };
-                    if (type === 'foreground') {
-                        setForegroundEdges(prev => [...prev, edgeData]);
-                    } else {
-                        setBackgroundEdges(prev => [...prev, edgeData]);
-                    }
-                } catch (error) {
-                    alert('边缘图像上传失败: ' + error.message);
+            try {
+                const preview = URL.createObjectURL(file);
+                const url = await uploadFileSimple(file, apiKey, MODEL_ID);
+                const edgeData = { preview, url, prompt: '' };
+                if (type === 'foreground') {
+                    setForegroundEdges(prev => [...prev, edgeData]);
+                } else {
+                    setBackgroundEdges(prev => [...prev, edgeData]);
                 }
-            };
-            reader.readAsDataURL(file);
+            } catch (error) {
+                alert('边缘图像上传失败: ' + error.message);
+            }
         }
     };
 
@@ -171,6 +172,11 @@ export const BackgroundGenerator = ({ onGenerate, isGenerating }) => {
                                         >
                                             <X size={12} />
                                         </button>
+                                        {uploading.base && (
+                                            <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center">
+                                                <div className="animate-spin h-6 w-6 border-2 border-white/30 border-t-white rounded-full" />
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-violet-400 hover:bg-violet-50/30 transition-colors">
@@ -199,6 +205,11 @@ export const BackgroundGenerator = ({ onGenerate, isGenerating }) => {
                                         >
                                             <X size={12} />
                                         </button>
+                                        {uploading.ref && (
+                                            <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center">
+                                                <div className="animate-spin h-6 w-6 border-2 border-white/30 border-t-white rounded-full" />
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition-colors">

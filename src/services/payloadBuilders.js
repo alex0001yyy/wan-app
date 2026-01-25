@@ -528,10 +528,14 @@ export const videoGeneration = (modelId, params, modelConfig) => {
     }
     
     const videoParams = {
-        duration: params.parameters.duration || 5,
         prompt_extend: params.parameters.prompt_extend ?? true,
         watermark: params.parameters.watermark ?? false
     };
+    
+    // Only add duration if model supports it (default: true for backward compatibility)
+    if (modelConfig.capabilities?.duration !== false) {
+        videoParams.duration = params.parameters.duration || 5;
+    }
     
     // Handle size/resolution
     if (params.parameters.size) {
@@ -590,9 +594,13 @@ export const imageToVideo = (modelId, params, modelConfig) => {
         }
         
         const videoParams = {
-            duration: params.parameters.duration || 5,
             watermark: params.parameters.watermark ?? false
         };
+        
+        // Only add duration if model supports it
+        if (modelConfig.capabilities?.duration !== false) {
+            videoParams.duration = params.parameters.duration || 5;
+        }
         
         // Handle size/resolution
         if (params.parameters.size) {
@@ -652,7 +660,8 @@ export const referenceToVideo = (modelId, params, modelConfig) => {
         input: {
             prompt: extractPrompt(params),
             reference_video_urls: params.input.reference_video_urls || [],
-            negative_prompt: params.parameters.negative_prompt
+            // negative_prompt 应该在 input 里（根据 API 文档）
+            negative_prompt: params.input.negative_prompt
         },
         parameters: {
             size: params.parameters.size,
@@ -679,32 +688,66 @@ export const videoEditing = (modelId, params, modelConfig) => {
         case 'image_reference':
             vacePlusInput.ref_images_url = params.input.ref_images_url || [];
             break;
-        case 'video_remap':
+        case 'video_repainting':
             vacePlusInput.video_url = params.input.video_url;
             break;
-        case 'local_edit':
+        case 'video_edit':
             vacePlusInput.video_url = params.input.video_url;
-            vacePlusInput.mask_url = params.input.mask_url;
+            vacePlusInput.mask_image_url = params.input.mask_image_url;
+            if (params.input.mask_frame_id) {
+                vacePlusInput.mask_frame_id = params.input.mask_frame_id;
+            }
             break;
-        case 'video_expand':
+        case 'video_outpainting':
             vacePlusInput.video_url = params.input.video_url;
             break;
-        case 'video_extend':
-            vacePlusInput.video_url = params.input.video_url;
+        case 'video_extension':
+            vacePlusInput.first_clip_url = params.input.first_clip_url;
             break;
+    }
+    
+    // 构建 parameters 对象
+    const vacePlusParams = {
+        size: params.parameters.size,
+        prompt_extend: params.parameters.prompt_extend ?? true,
+        watermark: params.parameters.watermark ?? false
+    };
+    
+    // obj_or_bg 只在 image_reference 功能时有效
+    if (params.input.function === 'image_reference' && params.parameters.obj_or_bg) {
+        vacePlusParams.obj_or_bg = params.parameters.obj_or_bg;
+    }
+    
+    // video_repainting 特有参数
+    if (params.input.function === 'video_repainting') {
+        vacePlusParams.control_condition = params.parameters.control_condition || 'depth';
+    }
+    
+    // video_edit 特有参数
+    if (params.input.function === 'video_edit') {
+        vacePlusParams.mask_type = params.parameters.mask_type || 'tracking';
+        if (params.parameters.expand_ratio !== undefined) {
+            vacePlusParams.expand_ratio = params.parameters.expand_ratio;
+        }
+    }
+    
+    // video_outpainting 特有参数
+    if (params.input.function === 'video_outpainting') {
+        vacePlusParams.top_scale = params.parameters.top_scale ?? 1.5;
+        vacePlusParams.bottom_scale = params.parameters.bottom_scale ?? 1.5;
+        vacePlusParams.left_scale = params.parameters.left_scale ?? 1.5;
+        vacePlusParams.right_scale = params.parameters.right_scale ?? 1.5;
+    }
+    
+    // seed 可选
+    if (params.parameters.seed) {
+        vacePlusParams.seed = params.parameters.seed;
     }
     
     return {
         model: modelId,
         input: vacePlusInput,
-        parameters: {
-            size: params.parameters.size,
-            duration: params.parameters.duration || 5,
-            prompt_extend: params.parameters.prompt_extend ?? true,
-            obj_or_bg: params.parameters.obj_or_bg,
-            seed: params.parameters.seed,
-            watermark: params.parameters.watermark ?? false
-        }
+        parameters: vacePlusParams
     };
 };
 
@@ -798,6 +841,85 @@ export const imageMotionTransfer = (modelId, params, modelConfig) => {
 };
 
 /**
+ * Format: Video Effect (视频特效)
+ * Used by: wanx2.1-i2v-plus, wanx2.1-i2v-turbo (I2V特效), wanx2.1-kf2v-plus (KF2V特效)
+ */
+export const videoEffect = (modelId, params, modelConfig) => {
+    const effectInput = {};
+    
+    // 根据特效类型使用不同的图片字段
+    if (modelConfig.effectType === 'kf2v') {
+        // 首尾帧特效使用 first_frame_url
+        effectInput.first_frame_url = params.input.img_url || params.input.first_frame_url;
+    } else {
+        // 首帧特效使用 img_url
+        effectInput.img_url = params.input.img_url || params.input.image_url;
+    }
+    
+    // 添加 template
+    if (params.input.template) {
+        effectInput.template = params.input.template;
+    }
+    
+    return {
+        model: modelId,
+        input: effectInput,
+        parameters: {
+            resolution: params.parameters.resolution || '720P',
+            prompt_extend: params.parameters.prompt_extend ?? true,
+            watermark: params.parameters.watermark ?? false
+        }
+    };
+};
+
+/**
+ * Format: Keyframe-to-Video (KF2V) - 首尾帧生视频
+ * Used by: wan2.2-kf2v-flash, wanx2.1-kf2v-plus
+ */
+export const keyframeToVideo = (modelId, params, modelConfig) => {
+    const kf2vInput = {
+        first_frame_url: params.input.first_frame_url
+    };
+    
+    // Add last_frame_url if provided (首尾帧模式)
+    if (params.input.last_frame_url) {
+        kf2vInput.last_frame_url = params.input.last_frame_url;
+    }
+    
+    // Add prompt if provided (首尾帧模式)
+    if (params.input.prompt) {
+        kf2vInput.prompt = params.input.prompt;
+    }
+    
+    // Add template if provided (特效模式)
+    if (params.input.template) {
+        kf2vInput.template = params.input.template;
+    }
+    
+    // Add negative_prompt if provided
+    if (params.input.negative_prompt && modelConfig.capabilities?.negative_prompt) {
+        kf2vInput.negative_prompt = params.input.negative_prompt;
+    }
+    
+    const kf2vParams = {
+        resolution: params.parameters.resolution || '720P',
+        prompt_extend: params.parameters.prompt_extend ?? true,
+        watermark: params.parameters.watermark ?? false
+    };
+    
+    // Add seed if provided
+    if (params.parameters.seed && modelConfig.capabilities?.seed) {
+        kf2vParams.seed = params.parameters.seed;
+    }
+    
+    return {
+        model: modelId,
+        input: kf2vInput,
+        parameters: kf2vParams
+    };
+};
+
+/**
  * Payload Builder Registry
  * Maps requestFormat identifiers to their builder functions
  */
@@ -818,6 +940,8 @@ export const payloadBuilders = {
     wordartTexture,
     videoGeneration,
     imageToVideo,
+    videoEffect,
+    keyframeToVideo,
     referenceToVideo,
     videoEditing,
     digitalHumanDetect,

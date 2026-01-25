@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Video, Monitor, ChevronDown, Sparkles, Upload, Settings2, ShieldCheck, Hash, Users } from 'lucide-react';
 import { R2V_MODELS, RESOLUTION_LABELS } from '../config/models';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
-const R2VGenerator = ({ onGenerate, isGenerating }) => {
+const R2VGenerator = ({ onGenerate, isGenerating, apiKey }) => {
     const defaultModel = R2V_MODELS[0];
     const [prompt, setPrompt] = useState('');
     const [referenceVideos, setReferenceVideos] = useState([
-        { value: '', file: null, preview: '', character: 'character1' }
+        { value: '', file: null, preview: '', character: 'character1', uploading: false }
     ]);
     const [negativePrompt, setNegativePrompt] = useState('');
     const [seed, setSeed] = useState('');
@@ -25,33 +26,45 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
         }
     }, [selectedModelId, currentModelConfig]);
 
-    // Convert file to base64
-    const convertFileToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-            reader.readAsDataURL(file);
-        });
-    };
-
-    // Handle video file selection for a specific reference slot
+    // Handle video file selection for a specific reference slot - 使用 OSS 上传
     const handleVideoFileChange = async (index, e) => {
         const file = e.target.files[0];
         if (file) {
             if (file.type.startsWith('video/') || file.name.toLowerCase().endsWith('.mp4') || file.name.toLowerCase().endsWith('.mov')) {
                 try {
-                    const base64 = await convertFileToBase64(file);
+                    // 设置上传中状态
                     const newReferences = [...referenceVideos];
                     newReferences[index] = {
                         ...newReferences[index],
-                        file: file,
-                        value: base64,
+                        uploading: true,
                         preview: URL.createObjectURL(file)
                     };
                     setReferenceVideos(newReferences);
+
+                    // 上传到 OSS（r2v API 必须使用 URL）
+                    const url = await uploadFileSimple(file, apiKey, selectedModelId, { requireUrl: true });
+                    console.log('✅ 参考视频上传成功:', url);
+                    
+                    // 更新状态
+                    const updatedReferences = [...referenceVideos];
+                    updatedReferences[index] = {
+                        ...updatedReferences[index],
+                        file: file,
+                        value: url,
+                        preview: URL.createObjectURL(file),
+                        uploading: false
+                    };
+                    setReferenceVideos(updatedReferences);
                 } catch (error) {
-                    console.error('Error converting video to base64:', error);
+                    console.error('Error uploading video:', error);
+                    alert('视频上传失败: ' + error.message);
+                    // 重置上传状态
+                    const resetReferences = [...referenceVideos];
+                    resetReferences[index] = {
+                        ...resetReferences[index],
+                        uploading: false
+                    };
+                    setReferenceVideos(resetReferences);
                 }
             } else {
                 alert('请选择有效的视频文件 (mp4, mov等)');
@@ -64,7 +77,7 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
         if (referenceVideos.length < 3) {
             setReferenceVideos([
                 ...referenceVideos,
-                { value: '', file: null, preview: '', character: `character${referenceVideos.length + 1}` }
+                { value: '', file: null, preview: '', character: `character${referenceVideos.length + 1}`, uploading: false }
             ]);
         }
     };
@@ -98,13 +111,14 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
             model: selectedModelId,
             input: {
                 prompt: prompt.trim(),
-                reference_video_urls: referenceUrls
+                reference_video_urls: referenceUrls,
+                // negative_prompt 应该在 input 里
+                negative_prompt: negativePrompt.trim() || undefined
             },
             parameters: {
                 size: resolution,
                 duration: parseInt(duration),
                 shot_type: currentModelConfig.capabilities?.shot_type ? shotType : undefined,
-                negative_prompt: currentModelConfig.capabilities?.negative_prompt ? negativePrompt : undefined,
                 seed: currentModelConfig.capabilities?.seed && seed ? parseInt(seed) : undefined,
                 watermark: currentModelConfig.capabilities?.watermark ? watermark : undefined
             }
@@ -159,7 +173,7 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
                                     className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
                                 >
                                     {currentModelConfig.resolutions.map(res => (
-                                        <option key={res} value={`${res === '720P' ? '1280*720' : '1920*1080'}`}>{RESOLUTION_LABELS[res] || res}</option>
+                                        <option key={res} value={res}>{RESOLUTION_LABELS[res] || res}</option>
                                     ))}
                                 </select>
                                 <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -188,9 +202,9 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
                         <div className="flex items-center gap-3 flex-wrap">
                             <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
                                 <Video className="text-violet-600" size={14} />
-                                参考视频 ({referenceVideos.filter(v => v.preview).length}/3)
+                                参考视频 ({referenceVideos.filter(v => v.preview).length}/{referenceVideos.length})
                             </label>
-    
+                    
                             {referenceVideos.map((ref, index) => (
                                 <div key={index} className="flex items-center gap-2">
                                     <input
@@ -221,9 +235,13 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    const newReferences = [...referenceVideos];
-                                                    newReferences[index] = { ...newReferences[index], value: '', file: null, preview: '' };
-                                                    setReferenceVideos(newReferences);
+                                                    if (referenceVideos.length > 1) {
+                                                        removeReferenceVideo(index);
+                                                    } else {
+                                                        const newReferences = [...referenceVideos];
+                                                        newReferences[index] = { ...newReferences[index], value: '', file: null, preview: '' };
+                                                        setReferenceVideos(newReferences);
+                                                    }
                                                 }}
                                                 className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
@@ -245,6 +263,18 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
                                     )}
                                 </div>
                             ))}
+                    
+                            {/* 添加参考视频按钮 */}
+                            {referenceVideos.length < 3 && (
+                                <button
+                                    type="button"
+                                    onClick={addReferenceVideo}
+                                    className="h-8 px-3 flex items-center gap-1.5 border border-dashed border-violet-300 rounded bg-violet-50 hover:bg-violet-100 text-violet-600 cursor-pointer transition-all"
+                                >
+                                    <Users size={14} />
+                                    <span className="text-xs font-medium">+角色</span>
+                                </button>
+                            )}
                         </div>
                         <div className="mt-2 text-xs text-gray-500">
                             提示：使用 character1, character2 等标识引用参考角色。支持 2-30s, ≤10  0MB, mp4/mov

@@ -4,10 +4,12 @@ import { API_BASE_URL, TIMEOUT, RETRY } from '../config/apiConfig';
 
 const BASE_URL = API_BASE_URL;
 
-const getHeaders = (apiKey, isAsync = false) => ({
+const getHeaders = (apiKey, isAsync = false, enableOssResolve = false) => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${apiKey}`,
-    ...(isAsync ? { 'X-DashScope-Async': 'enable' } : {})
+    ...(isAsync ? { 'X-DashScope-Async': 'enable' } : {}),
+    // 使用 oss:// 临时 URL 时必须添加此请求头
+    ...(enableOssResolve ? { 'X-DashScope-OssResourceResolve': 'enable' } : {})
 });
 
 /**
@@ -36,6 +38,24 @@ const retryRequest = async (fn, retries = RETRY.MAX_ATTEMPTS, delay = RETRY.INIT
 };
 
 /**
+ * 检查对象中是否包含 oss:// URL
+ * @param {any} obj - 要检查的对象
+ * @returns {boolean}
+ */
+const containsOssUrl = (obj) => {
+    if (typeof obj === 'string') {
+        return obj.startsWith('oss://');
+    }
+    if (Array.isArray(obj)) {
+        return obj.some(item => containsOssUrl(item));
+    }
+    if (obj && typeof obj === 'object') {
+        return Object.values(obj).some(value => containsOssUrl(value));
+    }
+    return false;
+};
+
+/**
  * Unified Creation Method for both Video and Image tasks.
  * Configuration-driven approach using model registry and payload builders.
  * 
@@ -49,7 +69,9 @@ const retryRequest = async (fn, retries = RETRY.MAX_ATTEMPTS, delay = RETRY.INIT
  */
 export const createTask = async (apiKey, params) => {
     const modelId = params.model;
-    const modelConfig = getModelById(modelId);
+    // 优先使用组件传递的 modelConfig，回退到 getModelById 查找
+    // 这解决了同一模型 ID 在不同场景下使用不同 requestFormat 的问题
+    const modelConfig = params.modelConfig || getModelById(modelId);
 
     if (!modelConfig) {
         throw new Error(`未知模型: ${modelId}`);
@@ -70,12 +92,16 @@ export const createTask = async (apiKey, params) => {
     // Build the payload using the builder
     const payload = builder(modelId, params, modelConfig);
 
+    // 检查 payload 中是否包含 oss:// URL
+    const needsOssResolve = containsOssUrl(payload);
+
     // Debug log (only in development)
     if (import.meta.env.DEV) {
         console.log('🚀 创建任务请求:', {
             模型ID: modelId,
             请求地址: endpoint,
             请求格式: requestFormat,
+            使用OSS: needsOssResolve,
             请求体: payload
         });
     }
@@ -89,7 +115,7 @@ export const createTask = async (apiKey, params) => {
         // Make the API request
         const fetchPromise = fetch(endpoint, {
             method: 'POST',
-            headers: getHeaders(apiKey, isAsync),
+            headers: getHeaders(apiKey, isAsync, needsOssResolve),
             body: JSON.stringify(payload)
         });
 

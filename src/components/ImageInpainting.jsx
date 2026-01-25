@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Eraser, Upload, Settings2, Sparkles, X, Wand2, Hash, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
-import { uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 
 const INPAINTING_MODELS = [
     {
@@ -34,7 +34,8 @@ const STYLES = [
     { value: '<sketch>', label: '素描' }
 ];
 
-export const ImageInpainting = ({ onGenerate, isGenerating }) => {
+export const ImageInpainting = ({ onGenerate, isGenerating, apiKey }) => {
+    const [uploading, setUploading] = useState({ input: false, mask: false });
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
@@ -74,19 +75,17 @@ export const ImageInpainting = ({ onGenerate, isGenerating }) => {
     const handleImageUpload = async (e, isMask = false) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64 = e.target.result;
-                if (isMask) {
-                    setMaskImage(base64);
-                } else {
-                    setInputImage(base64);
-                }
-            };
-            reader.readAsDataURL(file);
+            const preview = URL.createObjectURL(file);
+            if (isMask) {
+                setMaskImage(preview);
+            } else {
+                setInputImage(preview);
+            }
             
             try {
-                const url = await uploadFileToTempServer(file);
+                const uploadKey = isMask ? 'mask' : 'input';
+                setUploading(prev => ({ ...prev, [uploadKey]: true }));
+                const url = await uploadFileSimple(file, apiKey, selectedModel);
                 if (isMask) {
                     setMaskImageUrl(url);
                 } else {
@@ -94,6 +93,9 @@ export const ImageInpainting = ({ onGenerate, isGenerating }) => {
                 }
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                const uploadKey = isMask ? 'mask' : 'input';
+                setUploading(prev => ({ ...prev, [uploadKey]: false }));
             }
         }
     };

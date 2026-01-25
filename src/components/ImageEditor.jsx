@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '../hooks/useTasks';
 import { IMAGE_MODELS } from '../config/models';
-import { handleFileUpload, uploadFileToTempServer } from '../utils/fileUpload';
+import { uploadFileSimple } from '../hooks/useFileUpload';
 import { Sparkles, Image as ImageIcon, Settings2, Upload, Wand2, Palette, ChevronDown, ChevronUp, Hash, ShieldCheck, X } from 'lucide-react';
 
 // Filter models that support instruction-based image editing
@@ -12,7 +12,8 @@ const EDITING_MODELS = IMAGE_MODELS.filter(model =>
     (model.id === 'wanx2.1-imageedit' && model.functions) // Only description_edit function
 );
 
-export const ImageEditor = ({ onGenerate, isGenerating }) => {
+export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
+    const [uploading, setUploading] = useState({ input: false, ref: false, mask: false, styleRef: false });
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
@@ -99,34 +100,26 @@ export const ImageEditor = ({ onGenerate, isGenerating }) => {
             }
             
             // 设置本地预览
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64 = e.target.result;
-                if (isMask) {
-                    setMaskImage(base64);
-                } else if (isReference) {
-                    // 防止重复添加
-                    setReferenceImages(prev => {
-                        if (!prev.includes(base64)) {
-                            return [...prev, base64];
-                        }
-                        return prev;
-                    });
-                } else {
-                    setInputImage(base64);
-                }
-            };
-            reader.readAsDataURL(file);
+            const preview = URL.createObjectURL(file);
+            if (isMask) {
+                setMaskImage(preview);
+            } else if (isReference) {
+                setReferenceImages(prev => {
+                    if (!prev.includes(preview)) {
+                        return [...prev, preview];
+                    }
+                    return prev;
+                });
+            } else {
+                setInputImage(preview);
+            }
             
-            // 上传到服务器获取URL
+            // 上传到 OSS
             try {
-                // Check if image needs compression
-                const MAX_SIZE = 8 * 1024 * 1024; // 8MB
-                if (file.type.startsWith('image/') && file.size > MAX_SIZE) {
-                    console.log(`📦 图片较大 (${(file.size / 1024 / 1024).toFixed(2)}MB)，正在压缩...`);
-                }
+                const uploadKey = isMask ? 'mask' : (isReference ? 'ref' : 'input');
+                setUploading(prev => ({ ...prev, [uploadKey]: true }));
                 
-                const url = await uploadFileToTempServer(file);
+                const url = await uploadFileSimple(file, apiKey, selectedModel);
                 if (isMask) {
                     setMaskImageUrl(url);
                 } else if (isReference) {
@@ -141,6 +134,9 @@ export const ImageEditor = ({ onGenerate, isGenerating }) => {
                 }
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
+            } finally {
+                const uploadKey = isMask ? 'mask' : (isReference ? 'ref' : 'input');
+                setUploading(prev => ({ ...prev, [uploadKey]: false }));
             }
         }
     };
@@ -339,6 +335,11 @@ export const ImageEditor = ({ onGenerate, isGenerating }) => {
                                         >
                                             <X size={10} />
                                         </button>
+                                        {uploading.input && (
+                                            <div className="absolute inset-0 bg-black/30 rounded flex items-center justify-center">
+                                                <div className="animate-spin h-3 w-3 border-2 border-white/30 border-t-white rounded-full" />
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <label 
@@ -743,28 +744,34 @@ export const ImageEditor = ({ onGenerate, isGenerating }) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
                                                     // 设置本地预览
-                                                    const reader = new FileReader();
-                                                    reader.onload = (e) => setStyleRefImage(e.target.result);
-                                                    reader.readAsDataURL(file);
+                                                    setStyleRefImage(URL.createObjectURL(file));
                                                     
-                                                    // 上传到服务器获取URL
+                                                    // 上传到 OSS
                                                     try {
-                                                        const url = await uploadFileToTempServer(file);
+                                                        setUploading(prev => ({ ...prev, styleRef: true }));
+                                                        const url = await uploadFileSimple(file, apiKey, selectedModel);
                                                         setStyleRefImageUrl(url);
                                                     } catch (error) {
                                                         alert('风格参考图像上传失败: ' + error.message);
+                                                    } finally {
+                                                        setUploading(prev => ({ ...prev, styleRef: false }));
                                                     }
                                                 }
                                             }}
                                             className="w-full p-2 border rounded-md"
                                         />
                                         {styleRefImage && (
-                                            <div className="mt-2">
+                                            <div className="mt-2 relative inline-block">
                                                 <img 
                                                     src={styleRefImage} 
                                                     alt="风格参考预览" 
                                                     className="max-w-xs h-auto rounded-md border-2 border-green-500"
                                                 />
+                                                {uploading.styleRef && (
+                                                    <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center">
+                                                        <div className="animate-spin h-6 w-6 border-2 border-white/30 border-t-white rounded-full" />
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
