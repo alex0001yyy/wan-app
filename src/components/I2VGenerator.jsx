@@ -284,17 +284,200 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
                             </div>
                         </div>
                     </div>
-                                            <Video size={18} />
-                                            <span>{useEffectMode ? '生成特效' : '生图视频'}</span>
-                                        </>
-                                    )}
+
+                    {/* Image Upload Section */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-4 mb-3">
+                            {/* Frame Selection - Only show if model supports frame selection */}
+                            {currentModelConfig.capabilities?.frame_selection && (
+                                <div className="flex items-center gap-2">
+                                    <label className="text-xs font-medium text-gray-600">视频帧选择</label>
+                                    <div className="flex bg-white p-1 rounded-lg border border-gray-200 gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setImgFrameType('first')}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgFrameType === 'first' ? 'bg-violet-100 text-violet-700' : 'text-gray-500'}`}
+                                        >
+                                            首帧
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setImgFrameType('last')}
+                                            disabled={useEffectMode}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                                useEffectMode 
+                                                    ? 'text-gray-300 cursor-not-allowed' 
+                                                    : imgFrameType === 'last' 
+                                                        ? 'bg-violet-100 text-violet-700' 
+                                                        : 'text-gray-500'
+                                            }`}
+                                            title={useEffectMode ? '视频特效模式不支持尾帧' : ''}
+                                        >
+                                            尾帧
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Image Input Type Toggle */}
+                            <div className="flex items-center gap-2">
+                                <label className="text-xs font-medium text-gray-600">上传图片</label>
+                                <div className="flex bg-white p-1 rounded-lg border border-gray-200 gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setImgInput({...imgInput, type: 'url'})}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'url' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
+                                    >
+                                        URL链接
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setImgInput({...imgInput, type: 'file'})}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'file' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
+                                    >
+                                        文件上传
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Effect Mode Toggle */}
+                            <div className="flex items-center gap-2 ml-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setUseEffectMode(false)}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${!useEffectMode ? 'bg-violet-100 text-violet-700' : 'text-gray-500'}`}
+                                >
+                                    <Sparkles size={12} className="inline mr-1" />
+                                    智能动画
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setUseEffectMode(true)}
+                                    disabled={imgFrameType === 'last'}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                        imgFrameType === 'last'
+                                            ? 'text-gray-300 cursor-not-allowed'
+                                            : useEffectMode 
+                                                ? 'bg-purple-100 text-purple-700' 
+                                                : 'text-gray-500'
+                                    }`}
+                                    title={imgFrameType === 'last' ? '尾帧模式不支持视频特效' : ''}
+                                >
+                                    <Video size={12} className="inline mr-1" />
+                                    视频特效
                                 </button>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Advanced Settings */}
-                    {showAdvanced && (
+                        {/* Image Input Field */}
+                        {imgInput.type === 'url' ? (
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={imgInput.value}
+                                    onChange={(e) => {
+                                        const newValue = e.target.value;
+                                        setImgInput({...imgInput, value: newValue});
+                                        setImgPreview(newValue);
+                                    }}
+                                    placeholder="输入图片的公网 URL 地址..."
+                                    className="w-full bg-white border border-gray-200 px-4 py-2.5 rounded-lg text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
+                                    required
+                                />
+                                {imgPreview && !imgInput.file && (
+                                    <div className="mt-2 flex justify-center">
+                                        <img 
+                                            src={imgPreview} 
+                                            alt="Preview" 
+                                            className="max-h-20 max-w-full object-contain rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                                            onClick={() => {
+                                                const modal = document.createElement('div');
+                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                                modal.onclick = () => modal.remove();
+                                                
+                                                const img = document.createElement('img');
+                                                img.src = imgPreview;
+                                                img.className = 'max-w-full max-h-full object-contain rounded-lg';
+                                                img.onclick = (e) => e.stopPropagation();
+                                                
+                                                modal.appendChild(img);
+                                                document.body.appendChild(modal);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <label className="w-full bg-white border border-gray-200 rounded-lg px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageFileChange}
+                                        className="hidden"
+                                    />
+                                    <ImageIcon className="text-gray-400 mb-2" size={32} />
+                                    <span className="text-sm font-medium text-gray-500">点击选择图片文件</span>
+                                </label>
+                                {imgPreview && (
+                                    <div className="mt-2 flex justify-center">
+                                        <img 
+                                            src={imgPreview} 
+                                            alt="Preview" 
+                                            className="max-h-20 max-w-full object-contain rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                                            onClick={() => {
+                                                const modal = document.createElement('div');
+                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                                modal.onclick = () => modal.remove();
+                                                
+                                                const img = document.createElement('img');
+                                                img.src = imgPreview;
+                                                img.className = 'max-w-full max-h-full object-contain rounded-lg';
+                                                img.onclick = (e) => e.stopPropagation();
+                                                
+                                                modal.appendChild(img);
+                                                document.body.appendChild(modal);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${showAdvanced ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-150'}`}
+                    >
+                        <Settings2 size={16} className="inline mr-2" />
+                        {showAdvanced ? '收起设置' : '高级设置'}
+                    </button>
+                    
+                    <button
+                        type="submit"
+                        disabled={isGenerating || (useEffectMode ? !selectedTemplate : !prompt.trim()) || !(imgInput.value.trim())}
+                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                <span>生成中...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Video size={18} />
+                                <span>{useEffectMode ? '生成特效' : '生图视频'}</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* Advanced Settings */}
+                {showAdvanced && (
                         <div className="bg-white/50 backdrop-blur rounded-xl p-5 border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-5 animate-in slide-in-from-top-4 duration-500">
                             <div className="space-y-4">
                                 <div className="space-y-2">
@@ -440,7 +623,6 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
                         </div>
                     )}
                 </form>
-            </div>
         </div>
     );
 };
