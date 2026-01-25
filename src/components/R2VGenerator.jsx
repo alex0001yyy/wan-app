@@ -6,7 +6,7 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
     const defaultModel = R2V_MODELS[0];
     const [prompt, setPrompt] = useState('');
     const [referenceVideos, setReferenceVideos] = useState([
-        { type: 'url', value: '', file: null, preview: '', character: 'character1' }
+        { value: '', file: null, preview: '', character: 'character1' }
     ]);
     const [negativePrompt, setNegativePrompt] = useState('');
     const [seed, setSeed] = useState('');
@@ -64,7 +64,7 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
         if (referenceVideos.length < 3) {
             setReferenceVideos([
                 ...referenceVideos,
-                { type: 'url', value: '', file: null, preview: '', character: `character${referenceVideos.length + 1}` }
+                { value: '', file: null, preview: '', character: `character${referenceVideos.length + 1}` }
             ]);
         }
     };
@@ -77,33 +77,18 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
         }
     };
 
-    // Update reference video type (url/file)
-    const updateReferenceType = (index, type) => {
-        const newReferences = [...referenceVideos];
-        newReferences[index] = { ...newReferences[index], type };
-        setReferenceVideos(newReferences);
-    };
-
-    // Update reference video value
-    const updateReferenceValue = (index, value) => {
-        const newReferences = [...referenceVideos];
-        newReferences[index] = { ...newReferences[index], value, preview: value };
-        setReferenceVideos(newReferences);
-    };
+    // Remove unused functions
+    // updateReferenceType and updateReferenceValue are no longer needed
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!prompt.trim()) return;
 
-        // Prepare reference video URLs
+        // Prepare reference video URLs (all from file upload)
         const referenceUrls = [];
         for (const ref of referenceVideos) {
-            if (ref.value.trim()) {
-                if (ref.type === 'url') {
-                    referenceUrls.push(ref.value.trim());
-                } else if (ref.type === 'file' && ref.value) {
-                    referenceUrls.push(ref.value); // Base64 encoded file
-                }
+            if (ref.value) {
+                referenceUrls.push(ref.value); // Base64 encoded file
             }
         }
 
@@ -154,59 +139,59 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
                                     )}
                                 </div>
                                 
-                                {/* Input Type Toggle */}
-                                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 gap-1 mb-3 w-fit">
-                                    <button
-                                        type="button"
-                                        onClick={() => updateReferenceType(index, 'url')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${ref.type === 'url' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-400'}`}
-                                    >
-                                        URL链接
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateReferenceType(index, 'file')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${ref.type === 'file' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-400'}`}
-                                    >
-                                        文件上传
-                                    </button>
-                                </div>
-
-                                {ref.type === 'url' ? (
+                                {/* File Upload */}
+                                <input
+                                    type="file"
+                                    accept="video/mp4,video/mov,video/*"
+                                    onChange={(e) => handleVideoFileChange(index, e)}
+                                    className="hidden"
+                                    id={`video-upload-${index}`}
+                                />
+                                {ref.preview ? (
                                     <div className="relative group">
-                                        <input
-                                            type="text"
-                                            value={ref.value}
-                                            onChange={(e) => updateReferenceValue(index, e.target.value)}
-                                            placeholder="输入参考视频的公网 URL 地址... (mp4/mov)"
-                                            className="w-full bg-white border border-gray-100 px-4 py-3 rounded-xl text-sm font-medium outline-none focus:border-purple-300 shadow-sm transition-all"
+                                        <video 
+                                            src={ref.preview} 
+                                            className="w-full h-20 object-cover rounded-lg cursor-pointer"
+                                            onClick={() => {
+                                                const modal = document.createElement('div');
+                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                                modal.onclick = () => modal.remove();
+                                                
+                                                const video = document.createElement('video');
+                                                video.src = ref.preview;
+                                                video.controls = true;
+                                                video.className = 'max-w-full max-h-full rounded-lg';
+                                                video.onclick = (e) => e.stopPropagation();
+                                                
+                                                modal.appendChild(video);
+                                                document.body.appendChild(modal);
+                                            }}
                                         />
-                                        {ref.preview && !ref.file && (
-                                            <div className="mt-2 text-xs text-gray-500 truncate">
-                                                预览: {ref.preview.substring(0, 50)}...
-                                            </div>
-                                        )}
+                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg pointer-events-none"></div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newReferences = [...referenceVideos];
+                                                newReferences[index] = { ...newReferences[index], value: '', file: null, preview: '' };
+                                                setReferenceVideos(newReferences);
+                                            }}
+                                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            ✕
+                                        </button>
+                                        <div className="mt-2 text-xs text-gray-500 truncate">
+                                            已选择: {ref.file?.name || '视频文件'}
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="relative group">
-                                        <label className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm">
-                                            <input
-                                                type="file"
-                                                accept="video/mp4,video/mov,video/*"
-                                                onChange={(e) => handleVideoFileChange(index, e)}
-                                                className="hidden"
-                                            />
-                                            <span className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                                                <Upload size={14} />
-                                                选择视频文件 (2-30s, ≤100MB)
-                                            </span>
-                                        </label>
-                                        {ref.preview && (
-                                            <div className="mt-2 text-xs text-gray-500 truncate">
-                                                已选择: {ref.file?.name || '视频文件'}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <label 
+                                        htmlFor={`video-upload-${index}`}
+                                        className="w-full bg-white border border-gray-100 rounded-xl px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm"
+                                    >
+                                        <Upload size={20} className="text-gray-400 mb-2" />
+                                        <span className="text-sm font-medium text-gray-500">点击选择视频文件</span>
+                                        <span className="text-xs text-gray-400 mt-1">(2-30s, ≤100MB, mp4/mov)</span>
+                                    </label>
                                 )}
                             </div>
                         ))}
