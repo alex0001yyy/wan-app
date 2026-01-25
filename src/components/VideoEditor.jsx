@@ -6,9 +6,9 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
     const defaultModel = VACE_PLUS_MODELS[0];
     const [selectedFunction, setSelectedFunction] = useState('image_reference');
     const [prompt, setPrompt] = useState('');
-    const [refImages, setRefImages] = useState([{ type: 'url', value: '', file: null, preview: '', role: 'obj' }]);
-    const [inputVideo, setInputVideo] = useState({ type: 'url', value: '', file: null, preview: '' });
-    const [maskImage, setMaskImage] = useState({ type: 'url', value: '', file: null, preview: '' });
+    const [refImages, setRefImages] = useState([{ value: '', file: null, preview: '', role: 'obj' }]);
+    const [inputVideo, setInputVideo] = useState({ value: '', file: null, preview: '' });
+    const [maskImage, setMaskImage] = useState({ value: '', file: null, preview: '' });
     const [selectedModelId, setSelectedModelId] = useState(defaultModel.id);
     const [resolution, setResolution] = useState(defaultModel.defaultRes);
     const [duration, setDuration] = useState(5);
@@ -39,7 +39,6 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
                     const newRefImages = [...refImages];
                     newRefImages[index] = {
                         ...newRefImages[index],
-                        type: 'file',
                         value: base64,
                         file,
                         preview: URL.createObjectURL(file)
@@ -62,7 +61,6 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
                 try {
                     const base64 = await convertFileToBase64(file);
                     setInputVideo({
-                        type: 'file',
                         value: base64,
                         file,
                         preview: URL.createObjectURL(file)
@@ -84,7 +82,6 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
                 try {
                     const base64 = await convertFileToBase64(file);
                     setMaskImage({
-                        type: 'file',
                         value: base64,
                         file,
                         preview: URL.createObjectURL(file)
@@ -101,7 +98,7 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
     // Add new reference image
     const addRefImage = () => {
         if (refImages.length < 3) {
-            setRefImages([...refImages, { type: 'url', value: '', file: null, preview: '', role: 'obj' }]);
+            setRefImages([...refImages, { value: '', file: null, preview: '', role: 'obj' }]);
         }
     };
 
@@ -128,28 +125,18 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
         let inputVideoValue = '';
         let maskImageValue = '';
 
-        // Prepare reference images
+        // Prepare reference images (all from file upload)
         for (let img of refImages) {
-            if (img.type === 'url' && img.value.trim()) {
-                refImagesValue.push(img.value.trim());
-            } else if (img.type === 'file' && img.value) {
-                refImagesValue.push(img.value); // Already base64
+            if (img.value) {
+                refImagesValue.push(img.value); // Base64
             }
         }
 
-        // Prepare input video
-        if (inputVideo.type === 'url') {
-            inputVideoValue = inputVideo.value.trim();
-        } else if (inputVideo.type === 'file') {
-            inputVideoValue = inputVideo.value; // Already base64
-        }
+        // Prepare input video (from file upload)
+        inputVideoValue = inputVideo.value;
 
-        // Prepare mask image
-        if (maskImage.type === 'url') {
-            maskImageValue = maskImage.value.trim();
-        } else if (maskImage.type === 'file') {
-            maskImageValue = maskImage.value; // Already base64
-        }
+        // Prepare mask image (from file upload)
+        maskImageValue = maskImage.value;
 
         // Prepare input object based on selected function
         let inputObj = {
@@ -281,70 +268,46 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
                                     
                                     <div className="flex gap-2">
                                         <div className="flex-1">
-                                            <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 gap-1 mb-2 w-fit">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const newRefImages = [...refImages];
-                                                        newRefImages[index].type = 'url';
-                                                        setRefImages(newRefImages);
-                                                    }}
-                                                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                                        img.type === 'url' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'
-                                                    }`}
-                                                >
-                                                    URL链接
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const newRefImages = [...refImages];
-                                                        newRefImages[index].type = 'file';
-                                                        setRefImages(newRefImages);
-                                                    }}
-                                                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                                        img.type === 'file' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'
-                                                    }`}
-                                                >
-                                                    文件上传
-                                                </button>
-                                            </div>
-
-                                            {img.type === 'url' ? (
+                                                {/* File Upload */}
                                                 <input
-                                                    type="text"
-                                                    value={img.value}
-                                                    onChange={(e) => {
-                                                        const newRefImages = [...refImages];
-                                                        newRefImages[index].value = e.target.value;
-                                                        newRefImages[index].preview = e.target.value;
-                                                        setRefImages(newRefImages);
-                                                    }}
-                                                    placeholder="输入图片的公网 URL 地址..."
-                                                    className="w-full bg-white border border-gray-100 px-4 py-3 rounded-xl text-sm font-medium outline-none focus:border-blue-300 shadow-sm transition-all"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => handleRefImageFileChange(index, e)}
+                                                    className="hidden"
+                                                    id={`ref-image-upload-${index}`}
                                                 />
-                                            ) : (
-                                                <label className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm">
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={(e) => handleRefImageFileChange(index, e)}
-                                                        className="hidden"
-                                                    />
-                                                    <span className="text-sm font-medium text-gray-500">点击选择图片文件</span>
-                                                </label>
-                                            )}
+                                                {img.preview ? (
+                                                    <div className="relative group">
+                                                        <img 
+                                                            src={img.preview} 
+                                                            alt="Preview" 
+                                                            className="w-full h-20 object-cover rounded-lg cursor-pointer"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newRefImages = [...refImages];
+                                                                newRefImages[index] = { ...newRefImages[index], value: '', file: null, preview: '' };
+                                                                setRefImages(newRefImages);
+                                                            }}
+                                                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                        <div className="mt-2 text-xs text-gray-500 truncate">
+                                                            {img.file?.name || '图片文件'}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label 
+                                                        htmlFor={`ref-image-upload-${index}`}
+                                                        className="w-full bg-white border border-gray-100 rounded-xl px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm"
+                                                    >
+                                                        <Camera size={20} className="text-gray-400 mb-2" />
+                                                        <span className="text-sm font-medium text-gray-500">点击选择图片</span>
+                                                    </label>
+                                                )}
                                         </div>
-                                        
-                                        {img.preview && (
-                                            <div className="w-20 h-20 flex-shrink-0">
-                                                <img 
-                                                    src={img.preview} 
-                                                    alt="Preview" 
-                                                    className="w-full h-full object-cover rounded-lg border border-gray-200"
-                                                />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -371,61 +334,42 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
                             
                             <div className="flex gap-2">
                                 <div className="flex-1">
-                                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 gap-1 mb-2 w-fit">
-                                        <button
-                                            type="button"
-                                            onClick={() => setInputVideo({...inputVideo, type: 'url'})}
-                                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                                inputVideo.type === 'url' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400'
-                                            }`}
-                                        >
-                                            URL链接
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setInputVideo({...inputVideo, type: 'file'})}
-                                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                                inputVideo.type === 'file' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400'
-                                            }`}
-                                        >
-                                            文件上传
-                                        </button>
-                                    </div>
-
-                                    {inputVideo.type === 'url' ? (
-                                        <input
-                                            type="text"
-                                            value={inputVideo.value}
-                                            onChange={(e) => setInputVideo({
-                                                ...inputVideo,
-                                                value: e.target.value,
-                                                preview: e.target.value
-                                            })}
-                                            placeholder="输入视频的公网 URL 地址..."
-                                            className="w-full bg-white border border-gray-100 px-4 py-3 rounded-xl text-sm font-medium outline-none focus:border-green-300 shadow-sm transition-all"
-                                        />
-                                    ) : (
-                                        <label className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm">
-                                            <input
-                                                type="file"
-                                                accept="video/*"
-                                                onChange={handleInputVideoFileChange}
-                                                className="hidden"
+                                    {/* File Upload */}
+                                    <input
+                                        type="file"
+                                        accept="video/*"
+                                        onChange={handleInputVideoFileChange}
+                                        className="hidden"
+                                        id="input-video-upload"
+                                    />
+                                    {inputVideo.preview ? (
+                                        <div className="relative group">
+                                            <video 
+                                                src={inputVideo.preview} 
+                                                className="w-full h-20 object-cover rounded-lg cursor-pointer"
+                                                controls
                                             />
-                                            <span className="text-sm font-medium text-gray-500">点击选择视频文件</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setInputVideo({ value: '', file: null, preview: '' })}
+                                                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                ✕
+                                            </button>
+                                            <div className="mt-2 text-xs text-gray-500 truncate">
+                                                {inputVideo.file?.name || '视频文件'}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <label 
+                                            htmlFor="input-video-upload"
+                                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm"
+                                        >
+                                            <Video size={20} className="text-gray-400 mb-2" />
+                                            <span className="text-sm font-medium text-gray-500">点击选择视频</span>
                                         </label>
                                     )}
                                 </div>
-                                
-                                {inputVideo.preview && (
-                                    <div className="w-20 h-20 flex-shrink-0">
-                                        <video 
-                                            src={inputVideo.preview} 
-                                            className="w-full h-full object-cover rounded-lg border border-gray-200"
-                                            controls
-                                        />
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}
@@ -440,61 +384,43 @@ const VideoEditor = ({ onGenerate, isGenerating }) => {
                             
                             <div className="flex gap-2">
                                 <div className="flex-1">
-                                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 gap-1 mb-2 w-fit">
-                                        <button
-                                            type="button"
-                                            onClick={() => setMaskImage({...maskImage, type: 'url'})}
-                                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                                maskImage.type === 'url' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400'
-                                            }`}
-                                        >
-                                            URL链接
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setMaskImage({...maskImage, type: 'file'})}
-                                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                                maskImage.type === 'file' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400'
-                                            }`}
-                                        >
-                                            文件上传
-                                        </button>
-                                    </div>
-
-                                    {maskImage.type === 'url' ? (
-                                        <input
-                                            type="text"
-                                            value={maskImage.value}
-                                            onChange={(e) => setMaskImage({
-                                                ...maskImage,
-                                                value: e.target.value,
-                                                preview: e.target.value
-                                            })}
-                                            placeholder="输入掩码图像的公网 URL 地址..."
-                                            className="w-full bg-white border border-gray-100 px-4 py-3 rounded-xl text-sm font-medium outline-none focus:border-orange-300 shadow-sm transition-all"
-                                        />
-                                    ) : (
-                                        <label className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleMaskImageFileChange}
-                                                className="hidden"
+                                    {/* File Upload */}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleMaskImageFileChange}
+                                        className="hidden"
+                                        id="mask-image-upload"
+                                    />
+                                    {maskImage.preview ? (
+                                        <div className="relative group">
+                                            <img 
+                                                src={maskImage.preview} 
+                                                alt="Mask Preview" 
+                                                className="w-full h-20 object-cover rounded-lg cursor-pointer"
                                             />
-                                            <span className="text-sm font-medium text-gray-500">点击选择掩码图像文件</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMaskImage({ value: '', file: null, preview: '' })}
+                                                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                ✕
+                                            </button>
+                                            <div className="mt-2 text-xs text-gray-500 truncate">
+                                                {maskImage.file?.name || '掩码图像'}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <label 
+                                            htmlFor="mask-image-upload"
+                                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm"
+                                        >
+                                            <Edit3 size={20} className="text-gray-400 mb-2" />
+                                            <span className="text-sm font-medium text-gray-500">点击选择掩码图像</span>
+                                            <span className="text-xs text-gray-400 mt-1">白色区域=编辑区域</span>
                                         </label>
                                     )}
                                 </div>
-                                
-                                {maskImage.preview && (
-                                    <div className="w-20 h-20 flex-shrink-0">
-                                        <img 
-                                            src={maskImage.preview} 
-                                            alt="Mask Preview" 
-                                            className="w-full h-full object-cover rounded-lg border border-gray-200"
-                                        />
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}
