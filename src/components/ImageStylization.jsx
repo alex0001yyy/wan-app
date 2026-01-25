@@ -176,121 +176,127 @@ export const ImageStylization = ({ onGenerate, isGenerating }) => {
     const currentStyleOptions = selectedFunction ? STYLE_OPTIONS[selectedFunction] : [];
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-5">
-                <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Main Interaction Area */}
+                <div className="space-y-4">
+                    {/* 提示词输入 */}
+                    <div className="relative">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2">
+                            <Wand2 size={14} className="text-violet-500" />
+                            提示词
+                        </label>
+                        <textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            placeholder="描述想要的风格效果，例如：转换成法国绘本风格"
+                            className="w-full min-h-[100px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                            required
+                        />
+                    </div>
+
                     {/* 模型和功能选择 */}
                     <div className="grid grid-cols-3 gap-3">
                         <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Sparkles className="text-gray-500" size={12} />
-                                模型
-                            </label>
-                            <select
-                                value={selectedModel}
-                                onChange={(e) => setSelectedModel(e.target.value)}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">模型版本</label>
+                            <div className="relative">
+                                <select
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
                             >
-                                {STYLIZATION_MODELS.map(model => (
-                                    <option key={model.id} value={model.id}>
-                                        {model.name}
-                                    </option>
-                                ))}
-                            </select>
+                                    {STYLIZATION_MODELS.map(model => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
                         </div>
 
                         {selectedModel === 'wanx2.1-imageedit' && (
                             <div>
-                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                    <Wand2 className="text-gray-500" size={12} />
-                                    功能
-                                </label>
-                                <select
-                                    value={selectedFunction}
-                                    onChange={(e) => setSelectedFunction(e.target.value)}
-                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                                >
-                                    {STYLIZATION_MODELS[0].functions.map(func => (
-                                        <option key={func.id} value={func.id}>
-                                            {func.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <label className="text-xs font-medium text-gray-600 mb-1.5 block">功能</label>
+                                <div className="relative">
+                                    <select
+                                        value={selectedFunction}
+                                        onChange={(e) => setSelectedFunction(e.target.value)}
+                                        className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
+                                    >
+                                        {STYLIZATION_MODELS[0].functions.map(func => (
+                                            <option key={func.id} value={func.id}>
+                                                {func.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
                         )}
 
                         <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Hash className="text-gray-500" size={12} />
-                                数量
-                            </label>
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">数量</label>
                             <input
                                 type="number"
                                 min="1"
                                 max="4"
                                 value={n}
                                 onChange={(e) => setN(parseInt(e.target.value) || 1)}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
+                                className="w-full bg-gradient-to-br from-white to-gray-50 border border-gray-200 px-3 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all shadow-sm hover:shadow"
                             />
                         </div>
                     </div>
 
-                    {/* 模型描述 */}
-                    <p className="text-xs text-gray-400 leading-relaxed -mt-1">
-                        {selectedModel === 'wanx-style-repaint-v1' 
-                            ? '为人像照片应用各种风格效果' 
-                            : STYLIZATION_MODELS[0].functions.find(f => f.id === selectedFunction)?.description}
-                    </p>
-
                     {/* 图像上传区域 */}
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-3">
                             {/* 输入图像 */}
-                            <div className="flex items-center gap-2">
-                                <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
-                                    <Upload className="text-blue-600" size={14} />
-                                    输入图像
-                                </label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleImageUpload(e, false)}
-                                    className="hidden"
-                                    id="input-image-upload"
-                                    required
-                                />
-                                {inputImage ? (
-                                    <div className="relative group">
-                                        <img
-                                            src={inputImage}
-                                            alt="输入图像"
-                                            className="h-16 w-16 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-colors"
-                                            onClick={() => setPreviewImage(inputImage)}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setInputImage(null);
-                                                setInputImageUrl(null);
-                                            }}
-                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <label
-                                        htmlFor="input-image-upload"
-                                        className="h-16 w-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                                <Upload className="text-blue-600" size={14} />
+                                输入图像
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, false)}
+                                className="hidden"
+                                id="input-image-upload"
+                                required
+                            />
+                            {inputImage ? (
+                                <div className="relative group">
+                                    <img
+                                        src={inputImage}
+                                        alt="输入图像"
+                                        className="h-8 w-auto object-cover rounded cursor-pointer"
+                                        onClick={() => setPreviewImage(inputImage)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setInputImage(null);
+                                            setInputImageUrl(null);
+                                        }}
+                                        className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
-                                        <Upload className="text-gray-400" size={20} />
-                                    </label>
-                                )}
-                            </div>
+                                        ✕
+                                    </button>
+                                </div>
+                            ) : (
+                                <label
+                                    htmlFor="input-image-upload"
+                                    className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
+                                >
+                                    <Upload className="text-gray-400" size={14} />
+                                    <span className="text-xs text-gray-500">点击上传</span>
+                                </label>
+                            )}
 
                             {/* 风格参考图（仅人像风格重绘且自定义风格时显示） */}
                             {selectedModel === 'wanx-style-repaint-v1' && styleIndex === -1 && (
-                                <div className="flex items-center gap-2">
+                                <>
+                                    <div className="h-6 w-px bg-gray-300"></div>
                                     <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
                                         <Palette className="text-purple-600" size={14} />
                                         参考风格
@@ -307,7 +313,7 @@ export const ImageStylization = ({ onGenerate, isGenerating }) => {
                                             <img
                                                 src={styleRefImage}
                                                 alt="风格参考"
-                                                className="h-16 w-16 object-cover rounded-lg border-2 border-purple-200 cursor-pointer hover:border-purple-400 transition-colors"
+                                                className="h-8 w-auto object-cover rounded cursor-pointer"
                                                 onClick={() => setPreviewImage(styleRefImage)}
                                             />
                                             <button
@@ -316,135 +322,125 @@ export const ImageStylization = ({ onGenerate, isGenerating }) => {
                                                     setStyleRefImage(null);
                                                     setStyleRefImageUrl(null);
                                                 }}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
-                                                <X size={12} />
+                                                ✕
                                             </button>
                                         </div>
                                     ) : (
                                         <label
                                             htmlFor="style-ref-upload"
-                                            className="h-16 w-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all"
+                                            className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
                                         >
-                                            <Upload className="text-gray-400" size={20} />
+                                            <Upload className="text-gray-400" size={14} />
+                                            <span className="text-xs text-gray-500">点击上传</span>
                                         </label>
                                     )}
-                                </div>
+                                </>
                             )}
                         </div>
                     </div>
 
-                    {/* 提示词（wanx2.1-imageedit）或风格选择（人像风格重绘） */}
-                    {selectedModel === 'wanx-style-repaint-v1' ? (
+                    {/* 风格选择（仅人像风格重绘） */}
+                    {selectedModel === 'wanx-style-repaint-v1' && (
                         <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Palette className="text-gray-500" size={12} />
-                                风格选择
-                            </label>
-                            <select
-                                value={styleIndex}
-                                onChange={(e) => setStyleIndex(parseInt(e.target.value))}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                            >
-                                {PORTRAIT_STYLES.map(style => (
-                                    <option key={style.index} value={style.index}>
-                                        {style.name} - {style.description}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    ) : (
-                        <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                <Wand2 className="text-gray-500" size={12} />
-                                提示词
-                            </label>
-                            <textarea
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="描述想要的风格效果，例如：转换成法国绘本风格"
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                                rows="3"
-                                required
-                            />
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">风格选择</label>
+                            <div className="relative">
+                                <select
+                                    value={styleIndex}
+                                    onChange={(e) => setStyleIndex(parseInt(e.target.value))}
+                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
+                                >
+                                    {PORTRAIT_STYLES.map(style => (
+                                        <option key={style.index} value={style.index}>
+                                            {style.name} - {style.description}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
                         </div>
                     )}
+                </div>
 
-                    {/* 高级设置 */}
-                    {selectedModel === 'wanx2.1-imageedit' && (
-                        <div className="border-t border-gray-200 pt-3">
-                            <button
-                                type="button"
-                                onClick={() => setShowAdvanced(!showAdvanced)}
-                                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors"
-                            >
-                                <Settings2 size={14} />
-                                高级设置
-                                {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            </button>
-
-                            {showAdvanced && (
-                                <div className="mt-3 space-y-3">
-                                    {currentStyleOptions.length > 0 && (
-                                        <div>
-                                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                                <Palette className="text-gray-500" size={12} />
-                                                风格预设
-                                            </label>
-                                            <select
-                                                value={style}
-                                                onChange={(e) => setStyle(e.target.value)}
-                                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                                            >
-                                                {currentStyleOptions.map(opt => (
-                                                    <option key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center gap-3">
-                                        <label className="flex items-center gap-2 text-sm text-gray-600">
-                                            <input
-                                                type="checkbox"
-                                                checked={watermark}
-                                                onChange={(e) => setWatermark(e.target.checked)}
-                                                className="rounded border-gray-300"
-                                            />
-                                            添加水印
-                                        </label>
-                                    </div>
-
-                                    <div>
-                                        <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                                            随机种子
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={seed}
-                                            onChange={(e) => setSeed(e.target.value)}
-                                            placeholder="留空则随机生成"
-                                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* 提交按钮 */}
+                {/* 操作按钮 */}
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${showAdvanced ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-150'}`}
+                    >
+                        <Settings2 size={16} className="inline mr-2" />
+                        {showAdvanced ? '收起设置' : '高级设置'}
+                    </button>
+                    
                     <button
                         type="submit"
                         disabled={isGenerating}
-                        className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30"
                     >
-                        <Palette size={18} />
-                        {isGenerating ? '风格化中...' : '开始风格化'}
+                        {isGenerating ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                <span>风格化中...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Palette size={18} />
+                                <span>开始风格化</span>
+                            </>
+                        )}
                     </button>
-                </form>
-            </div>
+                </div>
+
+                {/* 高级设置 */}
+                {selectedModel === 'wanx2.1-imageedit' && showAdvanced && (
+                    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 border border-gray-200 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                        {currentStyleOptions.length > 0 && (
+                            <div>
+                                <label className="text-xs font-medium text-gray-600 mb-1.5 block">风格预设</label>
+                                <div className="relative">
+                                    <select
+                                        value={style}
+                                        onChange={(e) => setStyle(e.target.value)}
+                                        className="w-full appearance-none bg-white border border-gray-200 pl-3 pr-10 py-2.5 rounded-lg text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
+                                    >
+                                        {currentStyleOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={watermark}
+                                    onChange={(e) => setWatermark(e.target.checked)}
+                                    className="rounded border-gray-300"
+                                />
+                                添加水印
+                            </label>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">随机种子</label>
+                            <input
+                                type="number"
+                                value={seed}
+                                onChange={(e) => setSeed(e.target.value)}
+                                placeholder="留空则随机生成"
+                                className="w-full bg-white border border-gray-200 px-3 py-2.5 rounded-lg text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
+                            />
+                        </div>
+                    </div>
+                )}
+            </form>
 
             {/* 图片预览弹窗 */}
             {previewImage && (
