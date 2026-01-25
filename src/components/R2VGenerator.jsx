@@ -112,266 +112,245 @@ const R2VGenerator = ({ onGenerate, isGenerating }) => {
     };
 
     return (
-        <div className="fade-in-up h-full">
-            <div className="max-w-full mx-auto h-full p-1">
-                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
-                    {/* Reference Videos Section */}
-                    <div className="flex flex-col gap-4">
-                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            <Video size={14} className="text-purple-500" />
-                            参考视频 (最多3个)
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+    
+                {/* Main Interaction Area */}
+                <div className="space-y-4">
+                    {/* Prompt Input */}
+                    <div className="relative">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2">
+                            <Sparkles size={14} className="text-violet-500" />
+                            动作描述
                         </label>
-                        
-                        {referenceVideos.map((ref, index) => (
-                            <div key={index} className="border border-gray-100 rounded-2xl p-4 bg-white/50 backdrop-blur-sm">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Users size={16} className="text-purple-500" />
-                                    <span className="text-sm font-bold text-gray-700">{ref.character}</span>
-                                    {referenceVideos.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeReferenceVideo(index)}
-                                            className="ml-auto text-red-400 hover:text-red-600 text-sm font-bold"
-                                        >
-                                            删除
-                                        </button>
-                                    )}
-                                </div>
-                                
-                                {/* File Upload */}
-                                <input
-                                    type="file"
-                                    accept="video/mp4,video/mov,video/*"
-                                    onChange={(e) => handleVideoFileChange(index, e)}
-                                    className="hidden"
-                                    id={`video-upload-${index}`}
-                                />
-                                {ref.preview ? (
-                                    <div className="relative group">
-                                        <video 
-                                            src={ref.preview} 
-                                            className="w-full h-20 object-cover rounded-lg cursor-pointer"
-                                            onClick={() => {
-                                                const modal = document.createElement('div');
-                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
-                                                modal.onclick = () => modal.remove();
-                                                
-                                                const video = document.createElement('video');
-                                                video.src = ref.preview;
-                                                video.controls = true;
-                                                video.className = 'max-w-full max-h-full rounded-lg';
-                                                video.onclick = (e) => e.stopPropagation();
-                                                
-                                                modal.appendChild(video);
-                                                document.body.appendChild(modal);
-                                            }}
-                                        />
-                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg pointer-events-none"></div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newReferences = [...referenceVideos];
-                                                newReferences[index] = { ...newReferences[index], value: '', file: null, preview: '' };
-                                                setReferenceVideos(newReferences);
-                                            }}
-                                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            ✕
-                                        </button>
-                                        <div className="mt-2 text-xs text-gray-500 truncate">
-                                            已选择: {ref.file?.name || '视频文件'}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <label 
-                                        htmlFor={`video-upload-${index}`}
-                                        className="w-full bg-white border border-gray-100 rounded-xl px-4 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all shadow-sm"
-                                    >
-                                        <Upload size={20} className="text-gray-400 mb-2" />
-                                        <span className="text-sm font-medium text-gray-500">点击选择视频文件</span>
-                                        <span className="text-xs text-gray-400 mt-1">(2-30s, ≤100MB, mp4/mov)</span>
-                                    </label>
-                                )}
-                            </div>
-                        ))}
-
-                        {referenceVideos.length < 3 && (
-                            <button
-                                type="button"
-                                onClick={addReferenceVideo}
-                                className="w-fit px-4 py-2 text-sm font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-all"
-                            >
-                                + 添加更多角色参考
-                            </button>
-                        )}
+                        <textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            placeholder="描述视频内容，使用 character1, character2 等标识引用参考角色..."
+                            className="w-full min-h-[100px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                            required
+                        />
                     </div>
-
-                    {/* Main Interaction Area */}
-                    <div className="flex flex-col lg:flex-row gap-4 items-start">
-                        {/* Prompt Input */}
-                        <div className="flex-1 w-full relative group">
-                            <div className="absolute top-3 left-4 flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest z-10 transition-colors group-focus-within:text-purple-500">
-                                <Sparkles size={12} />
-                                动作描述 (Motion Prompt)
-                            </div>
-                            <textarea
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="描述视频内容，使用 character1, character2 等标识引用参考角色，例如：character1一边喝奶茶，一边随着音乐即兴跳舞。"
-                                className="w-full min-h-[120px] bg-white border border-gray-100 rounded-2xl px-5 pt-10 pb-4 text-gray-900 text-lg font-medium outline-none focus:border-purple-300 shadow-sm transition-all resize-none"
-                            />
-
-                            <button
-                                type="button"
-                                onClick={() => setShowAdvanced(!showAdvanced)}
-                                className={`absolute bottom-3 right-4 flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md transition-all ${showAdvanced ? 'bg-purple-50 text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
-                            >
-                                <Settings2 size={12} />
-                                {showAdvanced ? '折叠参数' : '高级设置'}
-                            </button>
-                        </div>
-
-                        {/* Controls */}
-                        <div className="w-full lg:w-fit flex flex-col gap-3 self-stretch">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full">
-                                {/* Model */}
-                                <div className="relative min-w-[200px]">
-                                    <select
-                                        value={selectedModelId}
-                                        onChange={(e) => setSelectedModelId(e.target.value)}
-                                        className="w-full h-full appearance-none bg-white border border-gray-100 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 shadow-sm outline-none hover:bg-gray-50 transition-all cursor-pointer border-l-4 border-l-purple-500"
-                                    >
-                                        {R2V_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
-                                </div>
-
-                                {/* Main Submit */}
-                                <button
-                                    type="submit"
-                                    disabled={isGenerating || !prompt.trim() || referenceVideos.every(ref => !ref.value.trim())}
-                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-30 shadow-xl shadow-purple-200 group"
+    
+                    {/* Control Bar - Model, Resolution, Duration */}
+                    <div className="grid grid-cols-3 gap-3">
+                        {/* Model Selector */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">模型版本</label>
+                            <div className="relative">
+                                <select
+                                    value={selectedModelId}
+                                    onChange={(e) => setSelectedModelId(e.target.value)}
+                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
                                 >
-                                    {isGenerating ? (
-                                        <div className="animate-spin h-5 w-5 border-2 border-white/20 border-t-white rounded-full" />
-                                    ) : (
-                                        <>
-                                            <Video size={18} />
-                                            <span>参考生视频</span>
-                                        </>
-                                    )}
-                                </button>
+                                    {R2V_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+    
+                        {/* Resolution Selector */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">分辨率</label>
+                            <div className="relative">
+                                <select
+                                    value={resolution}
+                                    onChange={(e) => setResolution(e.target.value)}
+                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
+                                >
+                                    {currentModelConfig.resolutions.map(res => (
+                                        <option key={res} value={`${res === '720P' ? '1280*720' : '1920*1080'}`}>{RESOLUTION_LABELS[res] || res}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+    
+                        {/* Duration Selector */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">时长</label>
+                            <div className="relative">
+                                <select
+                                    value={duration}
+                                    onChange={(e) => setDuration(parseInt(e.target.value))}
+                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
+                                >
+                                    <option value={5}>5秒</option>
+                                    <option value={10}>10秒</option>
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             </div>
                         </div>
                     </div>
-
-                    {/* Advanced Settings */}
-                    {showAdvanced && (
-                        <div className="bg-white/40 backdrop-blur rounded-2xl p-6 border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-500">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        <Monitor size={12} /> 画面分辨率
-                                    </label>
-                                    <select
-                                        value={resolution}
-                                        onChange={(e) => setResolution(e.target.value)}
-                                        className="w-full bg-white border border-gray-50 rounded-xl px-4 py-3 text-sm font-bold outline-none"
-                                    >
-                                        {currentModelConfig.resolutions.map(res => (
-                                            <option key={res} value={`${res === '720P' ? '1280*720' : '1920*1080'}`}>{RESOLUTION_LABELS[res] || res}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        视频时长 (秒)
-                                    </label>
-                                    <select
-                                        value={duration}
-                                        onChange={(e) => setDuration(parseInt(e.target.value))}
-                                        className="w-full bg-white border border-gray-50 rounded-xl px-4 py-3 text-sm font-bold outline-none"
-                                    >
-                                        <option value={5}>5秒</option>
-                                        <option value={10}>10秒</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {currentModelConfig.capabilities?.shot_type && (
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                            镜头叙事类型
-                                        </label>
-                                        <div className="grid grid-cols-2 gap-2">
+    
+                    {/* Reference Videos Upload Section */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                                <Video className="text-violet-600" size={14} />
+                                参考视频 ({referenceVideos.filter(v => v.preview).length}/3)
+                            </label>
+    
+                            {referenceVideos.map((ref, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <input
+                                        type="file"
+                                        accept="video/mp4,video/mov,video/*"
+                                        onChange={(e) => handleVideoFileChange(index, e)}
+                                        className="hidden"
+                                        id={`video-upload-${index}`}
+                                    />
+                                    {ref.preview ? (
+                                        <div className="relative group">
+                                            <video 
+                                                src={ref.preview} 
+                                                className="h-8 w-auto object-cover rounded cursor-pointer"
+                                                onClick={() => {
+                                                    const modal = document.createElement('div');
+                                                    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                                    modal.onclick = () => modal.remove();
+                                                    const video = document.createElement('video');
+                                                    video.src = ref.preview;
+                                                    video.controls = true;
+                                                    video.className = 'max-w-full max-h-full rounded-lg';
+                                                    video.onclick = (e) => e.stopPropagation();
+                                                    modal.appendChild(video);
+                                                    document.body.appendChild(modal);
+                                                }}
+                                            />
                                             <button
                                                 type="button"
-                                                onClick={() => setShotType('single')}
-                                                className={`py-2 text-xs font-bold rounded-lg border transition-all ${shotType === 'single' ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-gray-100 text-gray-500'}`}
-                                            >单镜头</button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShotType('multi')}
-                                                className={`py-2 text-xs font-bold rounded-lg border transition-all ${shotType === 'multi' ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-gray-100 text-gray-500'}`}
-                                            >多镜头</button>
+                                                onClick={() => {
+                                                    const newReferences = [...referenceVideos];
+                                                    newReferences[index] = { ...newReferences[index], value: '', file: null, preview: '' };
+                                                    setReferenceVideos(newReferences);
+                                                }}
+                                                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                ✕
+                                            </button>
+                                            {/* Character badge */}
+                                            <div className="absolute -bottom-1 left-0 right-0 text-[10px] bg-white/90 border border-gray-200 rounded px-1 py-0.5 text-center">
+                                                {ref.character}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-
-                                {currentModelConfig.capabilities?.seed && (
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                            <Hash size={12} /> 随机种子
+                                    ) : (
+                                        <label 
+                                            htmlFor={`video-upload-${index}`}
+                                            className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
+                                        >
+                                            <Upload className="text-gray-400" size={14} />
+                                            <span className="text-xs text-gray-500">{ref.character}</span>
                                         </label>
-                                        <input
-                                            type="number"
-                                            value={seed}
-                                            onChange={(e) => setSeed(e.target.value)}
-                                            placeholder="保持生成一致性"
-                                            className="w-full bg-white border border-gray-50 rounded-xl px-4 py-3 text-sm font-mono outline-none"
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500">
+                            提示：使用 character1, character2 等标识引用参考角色。支持 2-30s, ≤10  0MB, mp4/mov
+                        </div>
+                    </div>
+                </div>
+    
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${showAdvanced ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-150'}`}
+                    >
+                        <Settings2 size={16} className="inline mr-2" />
+                        {showAdvanced ? '收起设置' : '高级设置'}
+                    </button>
+                        
+                    <button
+                        type="submit"
+                        disabled={isGenerating || !prompt.trim() || referenceVideos.every(ref => !ref.value.trim())}
+                        className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                <span>生成中...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Video size={18} />
+                                <span>参考生视频</span>
+                            </>
+                        )}
+                    </button>
+                </div>
 
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    <ShieldCheck size={12} className="text-red-400" /> 反向提示词
-                                </label>
+                {/* Advanced Settings */}
+                {showAdvanced && (
+                    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 border border-gray-200 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Shot Type - if supported */}
+                            {currentModelConfig.capabilities?.shot_type && (
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">镜头类型</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShotType('single')}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${shotType === 'single' ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                        >单镜头</button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShotType('multi')}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${shotType === 'multi' ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                        >多镜头</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Seed - if supported */}
+                            {currentModelConfig.capabilities?.seed && (
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">随机种子</label>
+                                    <input
+                                        type="number"
+                                        value={seed}
+                                        onChange={(e) => setSeed(e.target.value)}
+                                        placeholder="保持生成一致性"
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Watermark - if supported */}
+                            {currentModelConfig.capabilities?.watermark && (
+                                <div className="flex items-center">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={watermark}
+                                            onChange={(e) => setWatermark(e.target.checked)}
+                                            className="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">添加水印</span>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Negative Prompt - if supported */}
+                        {currentModelConfig.capabilities?.negative_prompt && (
+                            <div>
+                                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">反向提示词</label>
                                 <textarea
                                     value={negativePrompt}
                                     onChange={(e) => setNegativePrompt(e.target.value)}
                                     placeholder="过滤不想要的场景..."
-                                    className="w-full h-[110px] bg-white border border-gray-50 rounded-xl p-3 text-xs outline-none focus:border-purple-300"
+                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
+                                    rows={3}
                                 />
                             </div>
-
-                            {/* Watermark Setting */}
-                            {currentModelConfig.capabilities?.watermark && (
-                                <div className="space-y-2 col-span-full">
-                                    <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        水印设置
-                                    </label>
-                                    <div className="flex items-center gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={watermark}
-                                                onChange={(e) => setWatermark(e.target.checked)}
-                                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">添加水印</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </form>
-            </div>
+                        )}
+                    </div>
+                )}
+            </form>
         </div>
     );
 };
