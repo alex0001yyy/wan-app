@@ -287,11 +287,12 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
 
                     {/* Image Upload Section */}
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center gap-4 mb-3">
+                        {/* Single Row Controls */}
+                        <div className="flex items-center gap-3 mb-3">
                             {/* Frame Selection - Only show if model supports frame selection */}
                             {currentModelConfig.capabilities?.frame_selection && (
-                                <div className="flex items-center gap-2">
-                                    <label className="text-xs font-medium text-gray-600">视频帧选择</label>
+                                <>
+                                    <label className="text-xs font-medium text-gray-600 whitespace-nowrap">视频帧选择</label>
                                     <div className="flex bg-white p-1 rounded-lg border border-gray-200 gap-1">
                                         <button
                                             type="button"
@@ -316,57 +317,56 @@ const I2VGenerator = ({ onGenerate, isGenerating }) => {
                                             尾帧
                                         </button>
                                     </div>
-                                </div>
+                                    <div className="h-6 w-px bg-gray-300"></div>
+                                </>
                             )}
                             
                             {/* Image Input Type Toggle */}
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs font-medium text-gray-600">上传图片</label>
-                                <div className="flex bg-white p-1 rounded-lg border border-gray-200 gap-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setImgInput({...imgInput, type: 'url'})}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'url' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
-                                    >
-                                        URL链接
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setImgInput({...imgInput, type: 'file'})}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'file' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
-                                    >
-                                        文件上传
-                                    </button>
-                                </div>
+                            <label className="text-xs font-medium text-gray-600 whitespace-nowrap">上传图片</label>
+                            <div className="flex bg-white p-1 rounded-lg border border-gray-200 gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setImgInput({...imgInput, type: 'url'})}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'url' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
+                                >
+                                    URL链接
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setImgInput({...imgInput, type: 'file'})}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${imgInput.type === 'file' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}
+                                >
+                                    文件上传
+                                </button>
                             </div>
 
+                            <div className="h-6 w-px bg-gray-300"></div>
+
                             {/* Effect Mode Toggle */}
-                            <div className="flex items-center gap-2 ml-auto">
-                                <button
-                                    type="button"
-                                    onClick={() => setUseEffectMode(false)}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${!useEffectMode ? 'bg-violet-100 text-violet-700' : 'text-gray-500'}`}
-                                >
-                                    <Sparkles size={12} className="inline mr-1" />
-                                    智能动画
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setUseEffectMode(true)}
-                                    disabled={imgFrameType === 'last'}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                                        imgFrameType === 'last'
-                                            ? 'text-gray-300 cursor-not-allowed'
-                                            : useEffectMode 
-                                                ? 'bg-purple-100 text-purple-700' 
-                                                : 'text-gray-500'
-                                    }`}
-                                    title={imgFrameType === 'last' ? '尾帧模式不支持视频特效' : ''}
-                                >
-                                    <Video size={12} className="inline mr-1" />
-                                    视频特效
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setUseEffectMode(false)}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${!useEffectMode ? 'bg-violet-100 text-violet-700' : 'text-gray-500'}`}
+                            >
+                                <Sparkles size={12} className="inline mr-1" />
+                                智能动画
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setUseEffectMode(true)}
+                                disabled={imgFrameType === 'last'}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                    imgFrameType === 'last'
+                                        ? 'text-gray-300 cursor-not-allowed'
+                                        : useEffectMode 
+                                            ? 'bg-purple-100 text-purple-700' 
+                                            : 'text-gray-500'
+                                }`}
+                                title={imgFrameType === 'last' ? '尾帧模式不支持视频特效' : ''}
+                            >
+                                <Video size={12} className="inline mr-1" />
+                                视频特效
+                            </button>
                         </div>
 
                         {/* Image Input Field */}
