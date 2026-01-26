@@ -4,7 +4,7 @@ import {
     ChevronDown, ChevronRight, Wand2, Film, Scissors,
     Palette, Expand, Type, Music, Smile, Shirt,
     Settings, Key, ExternalLink, Menu, Eraser, Maximize,
-    PenTool, SmilePlus, Sparkles, Github
+    PenTool, SmilePlus, Sparkles, Github, BookOpen
 } from 'lucide-react';
 
 const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
@@ -133,7 +133,7 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-50 bg-gray-50/50 space-y-3">
+            <div className="p-4 border-t border-gray-50 bg-gray-50/50 space-y-2">
                 {/* GitHub 链接 */}
                 <a
                     href="https://github.com/alex0001yyy/wan-app"
@@ -149,14 +149,27 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
                     <ExternalLink size={14} className="text-gray-400 group-hover:text-white transition-colors" />
                 </a>
                 
+                {/* Wiki 文档 */}
+                <a
+                    href="https://github.com/alex0001yyy/wan-app/tree/main/.qoder/repowiki/zh/content"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-3 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-xl transition-all group"
+                >
+                    <BookOpen size={18} />
+                    <div className="flex-1">
+                        <div className="text-sm font-semibold">项目文档</div>
+                        <div className="text-[10px] text-violet-500">Repo Wiki</div>
+                    </div>
+                    <ExternalLink size={14} className="text-violet-400 group-hover:text-violet-600 transition-colors" />
+                </a>
+                
                 {/* 用户信息 */}
-                <div className="flex items-center gap-3 px-2 py-1">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-violet-200 to-blue-200 flex items-center justify-center text-xs font-bold text-violet-700">
+                <div className="flex items-center gap-3 px-2 py-1 mt-1">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-violet-200 to-blue-200 flex items-center justify-center text-[10px] font-bold text-violet-700">
                         U
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-[11px] font-medium text-gray-700 truncate">阿里云 DashScope</div>
-                    </div>
+                    <div className="text-[10px] text-gray-500 truncate">阿里云 DashScope</div>
                 </div>
             </div>
         </div>
