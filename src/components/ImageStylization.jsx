@@ -10,11 +10,6 @@ const STYLIZATION_MODELS = [
             { id: 'stylization_all', name: '全局风格化', description: '转换整张图片的风格' },
             { id: 'stylization_local', name: '局部风格化', description: '转换图片局部区域的风格' }
         ]
-    },
-    {
-        id: 'wanx-style-repaint-v1',
-        name: '人像风格重绘',
-        description: '为人像照片应用各种风格效果'
     }
 ];
 
@@ -37,28 +32,17 @@ const STYLE_OPTIONS = {
     ]
 };
 
-const PORTRAIT_STYLES = [
-    { index: 0, name: '风格0', description: '自然人像' },
-    { index: 1, name: '风格1', description: '艺术风格1' },
-    { index: 2, name: '风格2', description: '艺术风格2' },
-    { index: 3, name: '风格3', description: '艺术风格3' },
-    { index: 4, name: '风格4', description: '艺术风格4' },
-    { index: -1, name: '自定义风格', description: '使用参考图片的风格' }
-];
-
 export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
     const [uploading, setUploading] = useState({ input: false, styleRef: false });
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
     const [inputImageUrl, setInputImageUrl] = useState(null);
-    const [styleRefImage, setStyleRefImage] = useState(null);
-    const [styleRefImageUrl, setStyleRefImageUrl] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
     const [prompt, setPrompt] = useState('');
-    const [selectedModel, setSelectedModel] = useState('wanx2.1-imageedit');
+    const [selectedModel] = useState('wanx2.1-imageedit');  // 固定为 wanx2.1-imageedit
     const [selectedFunction, setSelectedFunction] = useState('stylization_all');
     const [style, setStyle] = useState('<auto>');
-    const [styleIndex, setStyleIndex] = useState(0);
+    const [strength, setStrength] = useState(0.5);
     const [resolution, setResolution] = useState('1024*1024');
     const [n, setN] = useState(1);
     const [watermark, setWatermark] = useState(false);
@@ -75,39 +59,19 @@ export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
         return () => window.removeEventListener('keydown', handleEsc);
     }, [previewImage]);
 
-    // 切换模型时重置功能选择
-    useEffect(() => {
-        if (selectedModel === 'wanx-style-repaint-v1') {
-            setSelectedFunction('');
-        } else {
-            setSelectedFunction('stylization_all');
-        }
-    }, [selectedModel]);
-
-    const handleImageUpload = async (e, isStyleRef = false) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const preview = URL.createObjectURL(file);
-            if (isStyleRef) {
-                setStyleRefImage(preview);
-            } else {
-                setInputImage(preview);
-            }
+            setInputImage(URL.createObjectURL(file));
             
             try {
-                const uploadKey = isStyleRef ? 'styleRef' : 'input';
-                setUploading(prev => ({ ...prev, [uploadKey]: true }));
+                setUploading(prev => ({ ...prev, input: true }));
                 const url = await uploadFileSimple(file, apiKey, selectedModel);
-                if (isStyleRef) {
-                    setStyleRefImageUrl(url);
-                } else {
-                    setInputImageUrl(url);
-                }
+                setInputImageUrl(url);
             } catch (error) {
                 alert('图像上传失败: ' + error.message);
             } finally {
-                const uploadKey = isStyleRef ? 'styleRef' : 'input';
-                setUploading(prev => ({ ...prev, [uploadKey]: false }));
+                setUploading(prev => ({ ...prev, input: false }));
             }
         }
     };
@@ -125,49 +89,24 @@ export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
             return;
         }
 
-        let taskData;
-
-        if (selectedModel === 'wanx-style-repaint-v1') {
-            // 人像风格重绘模型
-            if (styleIndex === -1 && !styleRefImageUrl) {
-                alert('自定义风格需要上传参考图片');
-                return;
+        // wanx2.1-imageedit 风格化模型
+        const taskData = {
+            model: selectedModel,
+            input: {
+                function: selectedFunction,
+                prompt: prompt,
+                base_image_url: inputImageUrl
+            },
+            parameters: {
+                n: n,
+                watermark: watermark,
+                strength: strength,
+                ...(seed && { seed: parseInt(seed) })
             }
+        };
 
-            taskData = {
-                model: selectedModel,
-                input: {
-                    image_url: inputImageUrl,
-                    style_index: styleIndex
-                },
-                parameters: {
-                    size: resolution,
-                    n: n
-                }
-            };
-
-            if (styleIndex === -1 && styleRefImageUrl) {
-                taskData.input.style_ref_url = styleRefImageUrl;
-            }
-        } else {
-            // wanx2.1-imageedit 风格化模型
-            taskData = {
-                model: selectedModel,
-                input: {
-                    function: selectedFunction,
-                    prompt: prompt,
-                    base_image_url: inputImageUrl
-                },
-                parameters: {
-                    n: n,
-                    watermark: watermark,
-                    ...(seed && { seed: parseInt(seed) })
-                }
-            };
-
-            if (style !== '<auto>') {
-                taskData.parameters.style = style;
-            }
+        if (style !== '<auto>') {
+            taskData.parameters.style = style;
         }
 
         if (onGenerate) {
@@ -204,8 +143,8 @@ export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
                             <div className="relative">
                                 <select
                                     value={selectedModel}
-                                    onChange={(e) => setSelectedModel(e.target.value)}
-                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
+                                    disabled
+                                    className="w-full appearance-none bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-600 outline-none cursor-not-allowed shadow-sm"
                             >
                                     {STYLIZATION_MODELS.map(model => (
                                         <option key={model.id} value={model.id}>
@@ -261,7 +200,7 @@ export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
                             <input
                                 type="file"
                                 accept="image/*"
-                                onChange={(e) => handleImageUpload(e, false)}
+                                onChange={handleImageUpload}
                                 className="hidden"
                                 id="input-image-upload"
                                 required
@@ -294,75 +233,8 @@ export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
                                     <span className="text-xs text-gray-500">点击上传</span>
                                 </label>
                             )}
-
-                            {/* 风格参考图（仅人像风格重绘且自定义风格时显示） */}
-                            {selectedModel === 'wanx-style-repaint-v1' && styleIndex === -1 && (
-                                <>
-                                    <div className="h-6 w-px bg-gray-300"></div>
-                                    <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 whitespace-nowrap">
-                                        <Palette className="text-purple-600" size={14} />
-                                        参考风格
-                                    </label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(e, true)}
-                                        className="hidden"
-                                        id="style-ref-upload"
-                                    />
-                                    {styleRefImage ? (
-                                        <div className="relative group">
-                                            <img
-                                                src={styleRefImage}
-                                                alt="风格参考"
-                                                className="h-8 w-auto object-cover rounded cursor-pointer"
-                                                onClick={() => setPreviewImage(styleRefImage)}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setStyleRefImage(null);
-                                                    setStyleRefImageUrl(null);
-                                                }}
-                                                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <label
-                                            htmlFor="style-ref-upload"
-                                            className="h-8 px-3 flex items-center gap-2 border border-dashed border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer transition-all"
-                                        >
-                                            <Upload className="text-gray-400" size={14} />
-                                            <span className="text-xs text-gray-500">点击上传</span>
-                                        </label>
-                                    )}
-                                </>
-                            )}
                         </div>
                     </div>
-
-                    {/* 风格选择（仅人像风格重绘） */}
-                    {selectedModel === 'wanx-style-repaint-v1' && (
-                        <div>
-                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">风格选择</label>
-                            <div className="relative">
-                                <select
-                                    value={styleIndex}
-                                    onChange={(e) => setStyleIndex(parseInt(e.target.value))}
-                                    className="w-full appearance-none bg-gradient-to-br from-white to-gray-50 border border-gray-200 pl-3 pr-10 py-3 rounded-xl text-sm font-semibold text-gray-800 outline-none hover:border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all cursor-pointer shadow-sm hover:shadow"
-                                >
-                                    {PORTRAIT_STYLES.map(style => (
-                                        <option key={style.index} value={style.index}>
-                                            {style.name} - {style.description}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* 操作按钮 */}
@@ -417,6 +289,19 @@ export const ImageStylization = ({ onGenerate, isGenerating, apiKey }) => {
                                 </div>
                             </div>
                         )}
+
+                        <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1.5 block">风格强度 ({strength.toFixed(1)})</label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value={strength}
+                                onChange={(e) => setStrength(parseFloat(e.target.value))}
+                                className="w-full"
+                            />
+                        </div>
 
                         <div className="flex items-center gap-3">
                             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">

@@ -13,6 +13,7 @@ const EDITING_MODELS = IMAGE_MODELS.filter(model =>
 );
 
 export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploading, setUploading] = useState({ input: false, ref: false, mask: false, styleRef: false });
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [inputImage, setInputImage] = useState(null);
@@ -33,6 +34,7 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
     const [maskImage, setMaskImage] = useState(null); // For image inpainting models
     const [maskImageUrl, setMaskImageUrl] = useState(null); // For image inpainting models
     const [style, setStyle] = useState('<auto>'); // For models that support style selection
+    const [strength, setStrength] = useState(0.5); // For wanx2.1-imageedit strength control
     const [sketchWeight, setSketchWeight] = useState(10); // For sketch models
     const [sketchExtraction, setSketchExtraction] = useState(false); // For sketch models
     const [maskColor, setMaskColor] = useState([]); // For mask color specification
@@ -164,6 +166,7 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
             return;
         }
 
+        setIsSubmitting(true);
         const modelConfig = IMAGE_MODELS.find(m => m.id === selectedModel);
         
         let taskData;
@@ -179,24 +182,58 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
                 parameters: {
                     n: n,
                     watermark: watermark,
+                    strength: strength,
+                    ...(seed && { seed: parseInt(seed) })
+                }
+            };
+        } else if (selectedModel === 'wan2.5-i2i-preview' || selectedModel === 'wan2.6-image') {
+            // Wan系列图像编辑模型 - 使用 imageArraySynthesis 格式
+            // API格式：input.prompt + input.images数组
+            const images = [inputImageUrl, ...referenceImageUrls].filter(Boolean);
+            
+            taskData = {
+                model: selectedModel,
+                input: {
+                    prompt: prompt,
+                    images: images
+                },
+                parameters: {
+                    n: Math.min(n, 4),  // wan系列最多4张
+                    negative_prompt: negativePrompt,
+                    size: resolution,
+                    prompt_extend: promptExtend,
+                    watermark: watermark,
                     ...(seed && { seed: parseInt(seed) })
                 }
             };
         } else {
-            // Regular image editing models
+            // Qwen系列图像编辑模型 - 使用 multimodalMessages 格式
+            // API格式：input.messages.content数组，图片在前、文本在后
+            const contentArray = [];
+            
+            // 1. 先添加输入图像
+            if (inputImageUrl) {
+                contentArray.push({ image: inputImageUrl });
+            }
+            
+            // 2. 再添加参考图像
+            referenceImageUrls.forEach(imgUrl => {
+                contentArray.push({ image: imgUrl });
+            });
+            
+            // 3. 最后添加文本编辑指令（必须放在最后）
+            contentArray.push({ text: prompt });
+            
             taskData = {
                 model: selectedModel,
                 input: {
                     messages: [{
                         role: 'user',
-                        content: [
-                            { text: prompt },
-                            ...(inputImageUrl ? [{ image_url: inputImageUrl }] : []),
-                            ...referenceImageUrls.map(imgUrl => ({ image_url: imgUrl }))
-                        ]
+                        content: contentArray
                     }]
                 },
                 parameters: {
+                    n: Math.min(n, selectedModel === 'qwen-image-edit' ? 1 : 6),
                     negative_prompt: negativePrompt,
                     size: resolution,
                     prompt_extend: promptExtend,
@@ -211,17 +248,17 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
                 taskData.parameters.max_images = maxImages;
             }
 
-            if (modelConfig?.capabilities.n) {
-                taskData.parameters.n = Math.min(n, selectedModel === 'qwen-image-edit' ? 1 : 6);
-            }
-
             if (modelConfig?.capabilities.style) {
                 taskData.parameters.style = style;
             }
         }
 
         if (onGenerate) {
-            onGenerate(taskData, 'image-edit');
+            try {
+                await onGenerate(taskData, 'image-edit');
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -451,10 +488,10 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
                     
                     <button
                         type="submit"
-                        disabled={isGenerating}
+                        disabled={isSubmitting}
                         className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isGenerating ? (
+                        {isSubmitting ? (
                             <>
                                 <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
                                 <span>编辑中...</span>
@@ -504,7 +541,25 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
                                     />
                                 </div>
                             )}
-
+                            
+                            {/* Strength for wanx2.1-imageedit */}
+                            {selectedModel === 'wanx2.1-imageedit' && (
+                                <div>
+                                    <label className="flex items-center gap-2 text-xs font-medium text-gray-600 mb-1.5">
+                                        编辑强度 ({strength.toFixed(1)})
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.1"
+                                        value={strength}
+                                        onChange={(e) => setStrength(parseFloat(e.target.value))}
+                                        className="w-full"
+                                    />
+                                </div>
+                            )}
+                            
                             {/* Interleave Mode */}
                             {selectedModelConfig?.capabilities.enable_interleave && (
                                 <div>

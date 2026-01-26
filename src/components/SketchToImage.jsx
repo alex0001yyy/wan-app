@@ -43,6 +43,7 @@ export const SketchToImage = ({ onGenerate, isGenerating, apiKey }) => {
     const [sketchExtraction, setSketchExtraction] = useState(false);
     const [watermark, setWatermark] = useState(false);
     const [seed, setSeed] = useState('');
+    const [strength, setStrength] = useState(0.5);
 
     // ESC键关闭预览
     useEffect(() => {
@@ -121,6 +122,7 @@ export const SketchToImage = ({ onGenerate, isGenerating, apiKey }) => {
                 parameters: {
                     n: n,
                     watermark: watermark,
+                    strength: strength,
                     ...(seed && { seed: parseInt(seed) })
                 }
             };
@@ -327,6 +329,23 @@ export const SketchToImage = ({ onGenerate, isGenerating, apiKey }) => {
                                     </>
                                 ) : (
                                     <>
+                                        <div>
+                                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+                                                <PenTool className="text-gray-500" size={12} />
+                                                线稿强度 ({strength.toFixed(1)})
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.1"
+                                                value={strength}
+                                                onChange={(e) => setStrength(parseFloat(e.target.value))}
+                                                className="w-full"
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">值越大，生成图像越接近线稿结构</p>
+                                        </div>
+
                                         <div className="flex items-center gap-3">
                                             <label className="flex items-center gap-2 text-sm text-gray-600">
                                                 <input

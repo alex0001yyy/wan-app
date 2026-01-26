@@ -13,7 +13,6 @@ const PageLayout = ({
     filterType, 
     generator: GeneratorComponent, 
     onGenerate, 
-    isGenerating,
     onDelete,
     onRetry,
     onUpdate,
@@ -53,7 +52,6 @@ const PageLayout = ({
             <div className="bg-white/80 backdrop-blur rounded-xl border border-gray-100 shadow-sm">
                 <GeneratorComponent 
                     onGenerate={(params) => onGenerate(params, filterType)} 
-                    isGenerating={isGenerating}
                     apiKey={apiKey}
                 />
             </div>

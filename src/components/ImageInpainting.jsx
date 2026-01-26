@@ -51,6 +51,7 @@ export const ImageInpainting = ({ onGenerate, isGenerating, apiKey }) => {
     const [n, setN] = useState(1);
     const [watermark, setWatermark] = useState(false);
     const [seed, setSeed] = useState('');
+    const [strength, setStrength] = useState(0.5);
 
     // ESC键关闭预览
     useEffect(() => {
@@ -158,6 +159,7 @@ export const ImageInpainting = ({ onGenerate, isGenerating, apiKey }) => {
                 parameters: {
                     n: n,
                     watermark: watermark,
+                    strength: strength,
                     ...(seed && { seed: parseInt(seed) })
                 }
             };
@@ -445,6 +447,21 @@ export const ImageInpainting = ({ onGenerate, isGenerating, apiKey }) => {
                                                 onChange={(e) => setSeed(e.target.value)}
                                                 placeholder="留空则随机生成"
                                                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+                                                编辑强度 ({strength.toFixed(1)})
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.1"
+                                                value={strength}
+                                                onChange={(e) => setStrength(parseFloat(e.target.value))}
+                                                className="w-full"
                                             />
                                         </div>
                                     </>

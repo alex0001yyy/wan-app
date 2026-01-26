@@ -14,7 +14,6 @@ const STATUS_DONE = POLLING.STATUS_DONE;
 
 export const useTasks = (apiKey) => {
     const [tasks, setTasks] = useState([]);
-    const [isGenerating, setIsGenerating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const pollIntervalRef = useRef(null);
     const pollCountRef = useRef(0);
@@ -162,11 +161,12 @@ export const useTasks = (apiKey) => {
                     const { task_status, video_url } = result.value.output;
                     const updates = {};
 
-                    // Handle Image poll result
+                    // Handle Image poll result - 保存所有图片
                     if (result.value.output.results && result.value.output.results.length > 0) {
-                        const imgUrl = result.value.output.results[0].url;
-                        if (imgUrl && imgUrl !== task.imgUrl) {
-                            updates.imgUrl = imgUrl;
+                        const allUrls = result.value.output.results.map(r => r.url).filter(Boolean);
+                        if (allUrls.length > 0) {
+                            updates.imgUrl = allUrls[0];  // 第一张用于预览
+                            updates.imgUrls = allUrls;    // 所有图片
                         }
                     }
                     else if (result.value.output.choices && result.value.output.choices.length > 0) {
@@ -224,11 +224,12 @@ export const useTasks = (apiKey) => {
                     video_url
                 });
 
-                // Handle Image poll result
+                // Handle Image poll result - 保存所有图片
                 if (result.value.output.results && result.value.output.results.length > 0) {
-                    const imgUrl = result.value.output.results[0].url;
-                    if (imgUrl && imgUrl !== task.imgUrl) {
-                        updates.imgUrl = imgUrl;
+                    const allUrls = result.value.output.results.map(r => r.url).filter(Boolean);
+                    if (allUrls.length > 0) {
+                        updates.imgUrl = allUrls[0];  // 第一张用于预览
+                        updates.imgUrls = allUrls;    // 所有图片
                     }
                 }
                 else if (result.value.output.choices && result.value.output.choices.length > 0) {
@@ -286,9 +287,7 @@ export const useTasks = (apiKey) => {
     const runTask = async (params, type) => {
         if (!apiKey) throw new Error('API Key is required');
 
-        setIsGenerating(true);
         const tempId = `temp_${Date.now()}`;
-
         pollCountRef.current = 0;
 
         const newTask = {
@@ -315,12 +314,13 @@ export const useTasks = (apiKey) => {
                         status: result.status
                     };
                     if (result.type === 'SYNC' && result.results) {
-                        const url = result.results[0].url;
+                        const allUrls = result.results.map(r => r.url).filter(Boolean);
                         const modelConfig = getModelById(params.model);
                         if (modelConfig?.outputType === 'image') {
-                            updated.imgUrl = url;
+                            updated.imgUrl = allUrls[0];
+                            updated.imgUrls = allUrls;
                         } else if (modelConfig?.outputType === 'video') {
-                            updated.videoUrl = url;
+                            updated.videoUrl = allUrls[0];
                         }
                     }
                     return updated;
@@ -331,8 +331,6 @@ export const useTasks = (apiKey) => {
             console.error('Task Execution Failed:', error);
             updateTask(tempId, { status: 'FAILED' });
             throw error;
-        } finally {
-            setIsGenerating(false);
         }
     };
 
@@ -353,7 +351,6 @@ export const useTasks = (apiKey) => {
 
     return {
         tasks,
-        isGenerating,
         isLoading,
         runTask,
         retryTask,

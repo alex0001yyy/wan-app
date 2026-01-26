@@ -17,6 +17,7 @@ import { ImageInpainting } from './components/ImageInpainting';
 import { ImageEnhancement } from './components/ImageEnhancement';
 import { SketchToImage } from './components/SketchToImage';
 import { CartoonGenerator } from './components/CartoonGenerator';
+import { StyleRepaintGenerator } from './components/StyleRepaintGenerator';
 import AITryOn from './components/AITryOn';
 import DigitalHumanGenerator from './components/DigitalHumanGenerator';
 import VideoSwap from './components/VideoSwap';
@@ -47,7 +48,7 @@ function App() {
   const [activeMenu, setActiveMenu] = useState('video-t2v');
 
   // Unified logic for all tasks
-  const { tasks, isGenerating, runTask, retryTask, deleteTask, updateTask } = useTasks(apiKey);
+  const { tasks, runTask, retryTask, deleteTask, updateTask } = useTasks(apiKey);
 
   const handleSaveKey = (key) => {
     setApiKey(key);
@@ -82,7 +83,6 @@ function App() {
             filterType="video"
             generator={VideoGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -101,11 +101,11 @@ function App() {
             filterType="image"
             generator={ImageGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
             apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/text-to-image-v2-api-reference"
           />
         );
 
@@ -118,7 +118,6 @@ function App() {
             filterType="i2v"
             generator={I2VGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -136,7 +135,6 @@ function App() {
             filterType="kf2v"
             generator={KF2VGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -154,7 +152,6 @@ function App() {
             filterType="video-effect"
             generator={VideoEffectGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -172,11 +169,11 @@ function App() {
             filterType="r2v"
             generator={R2VGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
             apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/wan-video-to-video-api-reference"
           />
         );
 
@@ -189,11 +186,11 @@ function App() {
             filterType="video-edit"
             generator={VideoEditor}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
             apiKey={apiKey}
+            docUrl="https://help.aliyun.com/zh/model-studio/wanx-vace-api-reference"
           />
         );
 
@@ -206,7 +203,6 @@ function App() {
             filterType="image-edit"
             generator={ImageEditor}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -223,7 +219,6 @@ function App() {
             filterType="image-stylization"
             generator={ImageStylization}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -240,7 +235,6 @@ function App() {
             filterType="image-inpainting"
             generator={ImageInpainting}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -257,7 +251,6 @@ function App() {
             filterType="image-enhancement"
             generator={ImageEnhancement}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -274,7 +267,6 @@ function App() {
             filterType="sketch-to-image"
             generator={SketchToImage}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -291,7 +283,22 @@ function App() {
             filterType="cartoon-generator"
             generator={CartoonGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
+            onDelete={deleteTask}
+            onRetry={handleRetry}
+            onUpdate={updateTask}
+            apiKey={apiKey}
+          />
+        );
+
+      case 'style-repaint':
+        return (
+          <PageLayout
+            title="人像风格重绘"
+            description="将人物照片转换为23种艺术风格，支持预设风格或自定义风格参考图"
+            tasks={tasks}
+            filterType="style-repaint"
+            generator={StyleRepaintGenerator}
+            onGenerate={handleAction}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -308,7 +315,6 @@ function App() {
             filterType="background-generation"
             generator={BackgroundGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -325,7 +331,6 @@ function App() {
             filterType="image-translation"
             generator={ImageTranslator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -342,7 +347,6 @@ function App() {
             filterType="ai-tryon"
             generator={AITryOn}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -360,7 +364,6 @@ function App() {
             filterType="digital-human"
             generator={DigitalHumanGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -377,7 +380,6 @@ function App() {
             filterType="image-motion"
             generator={ImageMotion}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -394,7 +396,6 @@ function App() {
             filterType="emoji"
             generator={EmojiGenerator}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}
@@ -411,7 +412,6 @@ function App() {
             filterType="video-swap"
             generator={VideoSwap}
             onGenerate={handleAction}
-            isGenerating={isGenerating}
             onDelete={deleteTask}
             onRetry={handleRetry}
             onUpdate={updateTask}

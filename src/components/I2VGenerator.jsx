@@ -4,6 +4,7 @@ import { I2V_MODELS, RESOLUTION_LABELS } from '../config/models';
 import { uploadFileSimple } from '../hooks/useFileUpload';
 
 const I2VGenerator = ({ onGenerate, isGenerating, apiKey }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const defaultModel = I2V_MODELS[0];
     const [prompt, setPrompt] = useState('');
     const [imgInput, setImgInput] = useState({ value: '', file: null });
@@ -94,6 +95,7 @@ const I2VGenerator = ({ onGenerate, isGenerating, apiKey }) => {
         e.preventDefault();
         if (!prompt.trim() || !imgInput.value.trim()) return;
 
+        setIsSubmitting(true);
         let imgValue = imgInput.value;
         let audioValue = '';
 
@@ -113,17 +115,21 @@ const I2VGenerator = ({ onGenerate, isGenerating, apiKey }) => {
             inputObj.audio_url = audioValue;
         }
 
-        onGenerate({
-            model: selectedModelId,
-            input: inputObj,
-            parameters: {
-                size: resolution,
-                duration: currentModelConfig.capabilities?.duration !== false ? parseInt(duration) : undefined,
-                shot_type: currentModelConfig.capabilities?.shot_type ? shotType : undefined,
-                negative_prompt: currentModelConfig.capabilities?.negative_prompt ? negativePrompt : undefined,
-                seed: currentModelConfig.capabilities?.seed && seed ? parseInt(seed) : undefined,
-            }
-        });
+        try {
+            await onGenerate({
+                model: selectedModelId,
+                input: inputObj,
+                parameters: {
+                    size: resolution,
+                    duration: currentModelConfig.capabilities?.duration !== false ? parseInt(duration) : undefined,
+                    shot_type: currentModelConfig.capabilities?.shot_type ? shotType : undefined,
+                    negative_prompt: currentModelConfig.capabilities?.negative_prompt ? negativePrompt : undefined,
+                    seed: currentModelConfig.capabilities?.seed && seed ? parseInt(seed) : undefined,
+                }
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -260,10 +266,10 @@ const I2VGenerator = ({ onGenerate, isGenerating, apiKey }) => {
                     
                     <button
                         type="submit"
-                        disabled={isGenerating || !prompt.trim() || !imgInput.value.trim()}
+                        disabled={isSubmitting || !prompt.trim() || !imgInput.value.trim()}
                         className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isGenerating ? (
+                        {isSubmitting ? (
                             <>
                                 <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
                                 <span>生成中...</span>

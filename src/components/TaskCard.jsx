@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Download, AlertCircle, Loader2, Play, Maximize2, Trash2, RotateCcw, Copy, Check, Clock, CheckCircle2 } from 'lucide-react';
+import { Download, AlertCircle, Loader2, Play, Maximize2, Trash2, RotateCcw, Copy, Check, Clock, CheckCircle2, Images } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
 /**
@@ -143,6 +143,13 @@ const TaskCard = ({ task, index, onView, onDelete, onRetry, onUpdate }) => {
                             />
                             {/* Hover Overlay */}
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                            {/* 多图数量角标 */}
+                            {task.imgUrls && task.imgUrls.length > 1 && (
+                                <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-black/60 text-white backdrop-blur-sm">
+                                    <Images size={12} />
+                                    <span>{task.imgUrls.length}张</span>
+                                </div>
+                            )}
                         </>
                     ) : (
                         <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center cursor-default" onClick={(e) => e.stopPropagation()}>

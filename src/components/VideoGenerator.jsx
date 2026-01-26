@@ -5,6 +5,7 @@ import { isValidUrl } from '../utils/fileUpload';
 import { uploadFileSimple } from '../hooks/useFileUpload';
 
 const VideoGenerator = ({ onGenerate, isGenerating, apiKey }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploadingAudio, setUploadingAudio] = useState(false);
     const defaultModel = VIDEO_MODELS[0];
     const [prompt, setPrompt] = useState('');
@@ -83,6 +84,7 @@ const VideoGenerator = ({ onGenerate, isGenerating, apiKey }) => {
         e.preventDefault();
         if (!prompt.trim()) return;
 
+        setIsSubmitting(true);
         // Get audio value if provided
         const audioValue = audioInput.value.trim();
 
@@ -111,7 +113,11 @@ const VideoGenerator = ({ onGenerate, isGenerating, apiKey }) => {
             params.input.audio_url = audioValue;
         }
 
-        onGenerate(params);
+        try {
+            await onGenerate(params);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -199,10 +205,10 @@ const VideoGenerator = ({ onGenerate, isGenerating, apiKey }) => {
                         
                         <button
                             type="submit"
-                            disabled={isGenerating || !prompt.trim()}
+                            disabled={isSubmitting || !prompt.trim()}
                             className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30"
                         >
-                            {isGenerating ? (
+                            {isSubmitting ? (
                                 <>
                                     <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
                                     <span>生成中...</span>

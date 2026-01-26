@@ -6,6 +6,7 @@ import { IMAGE_MODELS, RESOLUTION_LABELS, STYLES, MODEL_CATEGORIES } from '../co
 const TEXT_TO_IMAGE_MODELS = IMAGE_MODELS.filter(m => m.category === MODEL_CATEGORIES.TEXT_TO_IMAGE);
 
 const ImageGenerator = ({ onGenerate, isGenerating }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const defaultModel = TEXT_TO_IMAGE_MODELS[0];
     const [prompt, setPrompt] = useState('');
     const [negativePrompt, setNegativePrompt] = useState('');
@@ -23,28 +24,37 @@ const ImageGenerator = ({ onGenerate, isGenerating }) => {
         if (!currentModelConfig.resolutions.includes(resolution)) {
             setResolution(currentModelConfig.defaultRes);
         }
+        // 如果模型不支持批量生成，重置为1
+        if (!currentModelConfig.capabilities?.n) {
+            setNumImages(1);
+        }
     }, [selectedModelId]);
 
     const getEstimatedCost = () => {
         return (currentModelConfig.price * numImages).toFixed(2);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!prompt.trim()) return;
 
-        onGenerate({
-            model: selectedModelId,
-            input: { prompt: prompt.trim() },
-            parameters: {
-                size: resolution,
-                n: numImages,
-                prompt_extend: usePromptExtend,
-                negative_prompt: currentModelConfig.capabilities?.negative_prompt ? negativePrompt : undefined,
-                seed: currentModelConfig.capabilities?.seed && seed ? parseInt(seed) : undefined,
-                style: currentModelConfig.capabilities?.style ? style : undefined
-            }
-        });
+        setIsSubmitting(true);
+        try {
+            await onGenerate({
+                model: selectedModelId,
+                input: { prompt: prompt.trim() },
+                parameters: {
+                    size: resolution,
+                    n: numImages,
+                    prompt_extend: usePromptExtend,
+                    negative_prompt: currentModelConfig.capabilities?.negative_prompt ? negativePrompt : undefined,
+                    seed: currentModelConfig.capabilities?.seed && seed ? parseInt(seed) : undefined,
+                    style: currentModelConfig.capabilities?.style ? style : undefined
+                }
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -127,28 +137,34 @@ const ImageGenerator = ({ onGenerate, isGenerating }) => {
                         </div>
                     )}
     
-                    {/* 生成张数 */}
+                    {/* 生成张数 - 只有支持n参数的模型才显示选择器 */}
                     <div className="relative">
                         <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mb-2">
                             <ImageIcon size={14} className="text-green-500" />
                             生成张数
                         </label>
-                        <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-200 gap-1 h-[48px] items-center justify-center">
-                            {[1, 2, 4].map(n => (
-                                <button
-                                    key={n}
-                                    type="button"
-                                    onClick={() => setNumImages(n)}
-                                    className={`flex-1 h-9 text-sm font-semibold rounded-lg transition-all ${
-                                        numImages === n
-                                            ? 'bg-violet-600 text-white shadow-sm'
-                                            : 'text-gray-500 hover:bg-gray-100'
-                                    }`}
-                                >
-                                    {n}
-                                </button>
-                            ))}
-                        </div>
+                        {currentModelConfig.capabilities?.n ? (
+                            <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-200 gap-1 h-[48px] items-center justify-center">
+                                {[1, 2, 4].map(n => (
+                                    <button
+                                        key={n}
+                                        type="button"
+                                        onClick={() => setNumImages(n)}
+                                        className={`flex-1 h-9 text-sm font-semibold rounded-lg transition-all ${
+                                            numImages === n
+                                                ? 'bg-violet-600 text-white shadow-sm'
+                                                : 'text-gray-500 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        {n}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 h-[48px] items-center justify-center">
+                                <span className="text-sm font-medium text-gray-500">1张（固定）</span>
+                            </div>
+                        )}
                     </div>
                 </div>
     
@@ -223,10 +239,10 @@ const ImageGenerator = ({ onGenerate, isGenerating }) => {
                         
                     <button
                         type="submit"
-                        disabled={isGenerating || !prompt.trim()}
+                        disabled={isSubmitting || !prompt.trim()}
                         className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30"
                     >
-                        {isGenerating ? (
+                        {isSubmitting ? (
                             <>
                                 <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
                                 <span>生成中...</span>

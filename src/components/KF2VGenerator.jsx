@@ -7,6 +7,7 @@ import { KF2V_MODELS, RESOLUTION_LABELS } from '../config/models';
 import { uploadFileSimple } from '../hooks/useFileUpload';
 
 const KF2VGenerator = memo(({ onGenerate, isGenerating, apiKey }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     // Get current model config with fallback
     const defaultModel = KF2V_MODELS[0] || { id: '', defaultRes: '720P', resolutions: ['720P'], capabilities: {} };
     
@@ -110,6 +111,7 @@ const KF2VGenerator = memo(({ onGenerate, isGenerating, apiKey }) => {
         e.preventDefault();
         if (!firstFrameInput.value) return;
 
+        setIsSubmitting(true);
         try {
             const taskData = {
                 model: selectedModel,
@@ -127,10 +129,12 @@ const KF2VGenerator = memo(({ onGenerate, isGenerating, apiKey }) => {
                 }
             };
 
-            onGenerate(taskData);
+            await onGenerate(taskData);
         } catch (error) {
             console.error('Submit failed:', error);
             alert('提交失败: ' + error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -308,10 +312,10 @@ const KF2VGenerator = memo(({ onGenerate, isGenerating, apiKey }) => {
                     
                     <button
                         type="submit"
-                        disabled={isGenerating || !firstFrameInput.value}
+                        disabled={isSubmitting || !firstFrameInput.value}
                         className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isGenerating ? (
+                        {isSubmitting ? (
                             <>
                                 <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
                                 <span>生成中...</span>

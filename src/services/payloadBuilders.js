@@ -114,22 +114,37 @@ const buildParameters = (params, modelConfig) => {
     if (params.parameters.duration !== undefined) {
         parameters.duration = params.parameters.duration;
     }
+
+    // Strength (for image editing intensity)
+    if (caps.strength && params.parameters.strength !== undefined) {
+        parameters.strength = params.parameters.strength;
+    }
+
+    // Upscale factor (for super resolution)
+    if (caps.upscale_factor && params.parameters.upscale_factor !== undefined) {
+        parameters.upscale_factor = params.parameters.upscale_factor;
+    }
+
+    // Output ratio (for expand function)
+    if (params.parameters.output_ratio !== undefined) {
+        parameters.output_ratio = params.parameters.output_ratio;
+    }
     
     return parameters;
 };
 
 /**
- * Format: Multimodal Messages (Qwen Image Edit models + Wan2.6-Image)
- * Used by: qwen-image-edit-max, qwen-image-edit-plus, qwen-image-edit, wan2.6-image
+ * Format: Multimodal Messages (Qwen Image models + Wan2.6 series)
+ * Used by: qwen-image-max, qwen-image-plus, qwen-image, qwen-image-edit-*, wan2.6-t2i, wan2.6-image
  */
 export const multimodalMessages = (modelId, params, modelConfig) => {
     const content = buildMultimodalContent(params);
     const hasImages = content.some(item => item.image);
     const baseParams = buildParameters(params, modelConfig);
     
-    // For wan2.6-image: If no images provided, must enable interleave mode (text-only generation)
-    if (modelId === 'wan2.6-image' && !hasImages && modelConfig.capabilities?.enable_interleave) {
-        baseParams.enable_interleave = true;
+    // wan2.6-image 图像编辑模式：必须输入图片
+    if (modelId === 'wan2.6-image' && !hasImages) {
+        throw new Error(`${modelConfig.name}必须上传至少一张参考图片才能进行编辑`);
     }
     
     // For qwen-image-edit series: Must have at least one image (editing models)
@@ -303,10 +318,6 @@ export const styleRepaint = (modelId, params, modelConfig) => {
         input: {
             image_url: params.input.image_url,
             style_index: params.input.style_index
-        },
-        parameters: {
-            size: params.parameters.size,
-            n: params.parameters.n || 1
         }
     };
     
@@ -381,7 +392,7 @@ export const backgroundGeneration = (modelId, params, modelConfig) => {
     // Add optional reference image if provided
     if (params.input.ref_image_url) {
         payload.input.ref_image_url = params.input.ref_image_url;
-        payload.parameters.noise_level = params.parameters.noise_level || 300;
+        payload.parameters.noise_level = params.parameters.noise_level ?? 300;
     }
     
     // Add optional reference prompt if provided
@@ -389,9 +400,31 @@ export const backgroundGeneration = (modelId, params, modelConfig) => {
         payload.input.ref_prompt = params.input.ref_prompt;
     }
     
+    // Add negative reference prompt if provided
+    if (params.input.neg_ref_prompt) {
+        payload.input.neg_ref_prompt = params.input.neg_ref_prompt;
+    }
+    
     // Add reference prompt weight if both ref image and prompt are provided
     if (params.input.ref_image_url && params.input.ref_prompt) {
-        payload.parameters.ref_prompt_weight = params.parameters.ref_prompt_weight || 0.5;
+        payload.parameters.ref_prompt_weight = params.parameters.ref_prompt_weight ?? 0.5;
+    }
+    
+    // Add edge guidance elements (foreground/background)
+    if (params.input.reference_edge) {
+        payload.input.reference_edge = {};
+        
+        // Foreground edges
+        if (params.input.reference_edge.foreground_edge?.length > 0) {
+            payload.input.reference_edge.foreground_edge = params.input.reference_edge.foreground_edge;
+            payload.input.reference_edge.foreground_edge_prompt = params.input.reference_edge.foreground_edge_prompt || [];
+        }
+        
+        // Background edges
+        if (params.input.reference_edge.background_edge?.length > 0) {
+            payload.input.reference_edge.background_edge = params.input.reference_edge.background_edge;
+            payload.input.reference_edge.background_edge_prompt = params.input.reference_edge.background_edge_prompt || [];
+        }
     }
     
     return payload;

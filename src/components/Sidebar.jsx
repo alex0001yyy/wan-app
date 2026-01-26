@@ -4,7 +4,7 @@ import {
     ChevronDown, ChevronRight, Wand2, Film, Scissors,
     Palette, Expand, Type, Music, Smile, Shirt,
     Settings, Key, ExternalLink, Menu, Eraser, Maximize,
-    PenTool, SmilePlus, Sparkles
+    PenTool, SmilePlus, Sparkles, Github
 } from 'lucide-react';
 
 const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
@@ -35,6 +35,7 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
                 { id: 'image-enhancement', label: '图像增强', icon: <Maximize size={16} /> },
                 { id: 'sketch-to-image', label: '草图生图', icon: <PenTool size={16} /> },
                 { id: 'cartoon-generator', label: '卡通形象生成', icon: <Smile size={16} /> },
+                { id: 'style-repaint', label: '人像风格重绘', icon: <Palette size={16} /> },
                 { id: 'mk-bg-gen', label: '背景生成', icon: <ImageIcon size={16} /> },
                 { id: 'image-translation', label: '图像翻译', icon: <Type size={16} /> },
                 { id: 'image-creative', label: '创意文字/海报', icon: <Type size={16} /> },
@@ -84,7 +85,7 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
                     <Wand2 size={18} fill="currentColor" className="text-white/20" />
                 </div>
                 <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700">
-                    通义万相
+                    万象工坊
                 </span>
             </div>
 
@@ -131,16 +132,27 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
                 })}
             </div>
 
-            {/* Footer / Profile */}
+            {/* Footer */}
             <div className="p-4 border-t border-gray-50 bg-gray-50/50">
-                <div className="flex items-center gap-3 px-2 py-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-200 to-blue-200 flex items-center justify-center text-xs font-bold text-violet-700">
-                        U
+                <div className="flex items-center justify-between px-2 py-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-200 to-blue-200 flex items-center justify-center text-xs font-bold text-violet-700">
+                            U
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-xs font-bold text-gray-900 truncate">用户工作台</div>
+                            <div className="text-[10px] text-gray-500 truncate">阿里云 DashScope</div>
+                        </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-gray-900 truncate">用户的工作台</div>
-                        <div className="text-[10px] text-gray-500 truncate">阿里云 DashScope</div>
-                    </div>
+                    <a
+                        href="https://github.com/alex0001yyy/wan-app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="GitHub"
+                    >
+                        <Github size={18} />
+                    </a>
                 </div>
             </div>
         </div>

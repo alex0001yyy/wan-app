@@ -2,6 +2,7 @@
 export const PROTOCOLS = {
     SYNC_MULTIMODAL: 'sync_multimodal',    // Qwen-VL-Plus/Max
     ASYNC_T2I: 'async_t2i',               // Text-to-Image
+    ASYNC_I2I: 'async_i2i',               // Image-to-Image (异步图像编辑)
     ASYNC_VIDEO: 'async_video',           // Text-to-Video
     ASYNC_I2V: 'async_i2v',               // Image-to-Video
     ASYNC_KF2V: 'async_kf2v',             // Keyframe-to-Video (首尾帧生视频)
@@ -401,6 +402,89 @@ export const VACE_PLUS_MODELS = [
 
 // Image Models Configuration
 export const IMAGE_MODELS = [
+    // Qwen Image Generation models (通义千问文生图模型)
+    {
+        id: 'qwen-image-max',
+        name: '通义千问-文生图-Max',
+        provider: '阿里通义实验室',
+        description: '提升图像真实感与自然度，有效降低AI合成痕迹，在人物质感、纹理细节和文字渲染等方面表现突出',
+        category: MODEL_CATEGORIES.TEXT_TO_IMAGE,
+        protocol: PROTOCOLS.SYNC_MULTIMODAL,
+        endpoint: '/services/aigc/multimodal-generation/generation',
+        requestFormat: 'multimodalMessages',
+        outputType: OUTPUT_TYPES.IMAGE,
+        async: false,
+        defaultRes: '1024*1024',
+        resolutions: ['1024*1024', '1536*1024', '1024*1536', '768*1152', '1152*768', '960*1280', '1280*960', '720*1280', '1280*720'],
+        capabilities: {
+            negative_prompt: true,
+            prompt_extend: true,
+            watermark: true,
+            seed: true
+            // 固定1张，不支持n参数
+        }
+    },
+    {
+        id: 'qwen-image-plus',
+        name: '通义千问-文生图-Plus',
+        provider: '阿里通义实验室',
+        description: '支持多样化的艺术风格，尤其擅长在图像中渲染复杂文字，可实现图文混合的布局设计',
+        category: MODEL_CATEGORIES.TEXT_TO_IMAGE,
+        protocol: PROTOCOLS.SYNC_MULTIMODAL,
+        endpoint: '/services/aigc/multimodal-generation/generation',
+        requestFormat: 'multimodalMessages',
+        outputType: OUTPUT_TYPES.IMAGE,
+        async: false,
+        defaultRes: '1024*1024',
+        resolutions: ['1024*1024', '1536*1024', '1024*1536', '768*1152', '1152*768', '960*1280', '1280*960', '720*1280', '1280*720'],
+        capabilities: {
+            negative_prompt: true,
+            prompt_extend: true,
+            watermark: true,
+            seed: true
+            // 固定1张，不支持n参数
+        }
+    },
+    {
+        id: 'qwen-image',
+        name: '通义千问-文生图',
+        provider: '阿里通义实验室',
+        description: '通义千问文生图基础模型，支持多样化艺术风格和文字渲染',
+        category: MODEL_CATEGORIES.TEXT_TO_IMAGE,
+        protocol: PROTOCOLS.SYNC_MULTIMODAL,
+        endpoint: '/services/aigc/multimodal-generation/generation',
+        requestFormat: 'multimodalMessages',
+        outputType: OUTPUT_TYPES.IMAGE,
+        async: false,
+        defaultRes: '1024*1024',
+        resolutions: ['1024*1024'],
+        capabilities: {
+            negative_prompt: true,
+            watermark: true,
+            seed: true
+            // 固定1张，不支持n参数
+        }
+    },
+    {
+        id: 'z-image-turbo',
+        name: 'Z-Image-Turbo (极速轻量)',
+        provider: '阿里通义实验室',
+        description: '轻量级文生图模型，快速生图，适合高频次生成场景',
+        category: MODEL_CATEGORIES.TEXT_TO_IMAGE,
+        protocol: PROTOCOLS.SYNC_MULTIMODAL,
+        endpoint: '/services/aigc/multimodal-generation/generation',
+        requestFormat: 'multimodalMessages',
+        outputType: OUTPUT_TYPES.IMAGE,
+        async: false,
+        defaultRes: '1024*1024',
+        resolutions: ['1024*1024', '512*512', '768*768', '1280*720', '720*1280', '1536*1024', '1024*1536', '2048*1024', '1024*2048'],
+        capabilities: {
+            negative_prompt: true,
+            watermark: true,
+            seed: true
+            // 固定1张，不支持n参数
+        }
+    },
     // Qwen Image Edit models (通义千问图像编辑模型)
     {
         id: 'qwen-image-edit-max',
@@ -481,6 +565,8 @@ export const IMAGE_MODELS = [
             watermark: true,
             seed: true,
             n: true, // 输出图像数量 (1-4张)
+            strength: true, // 控制编辑/风格化强度
+            upscale_factor: true, // 图像超分放大倍数
             functions: [
                 'stylization_all',      // 全局风格化
                 'stylization_local',    // 局部风格化  
@@ -501,13 +587,13 @@ export const IMAGE_MODELS = [
         provider: '阿里通义实验室',
         description: '万相2.5通用图像编辑模型，支持单图编辑、多图融合，支持1-3张图片输入、1-4张图片输出',
         category: MODEL_CATEGORIES.IMAGE_SYNTHESIS,
-        protocol: PROTOCOLS.SYNC_MULTIMODAL,
-        endpoint: '/services/aigc/multimodal-generation/generation',
+        protocol: PROTOCOLS.ASYNC_I2I,  // ✅ 修复：异步图像编辑
+        endpoint: '/services/aigc/image2image/image-synthesis',  // ✅ 修复：正确的异步接口
         requestFormat: 'imageArraySynthesis',
         outputType: OUTPUT_TYPES.IMAGE,
-        async: false, // 官方文档明确说明仅支持同步调用
+        // ✅ 移除 async: false，因为这是异步模型
         defaultRes: '1280*1280',
-        resolutions: ['1280*1280', '1536*1024', '1024*1536', '768*1152', '1152*768', '960*1280', '1280*960', '720*1280', '1280*720'],
+        resolutions: ['1280*1280', '1024*1024', '800*1200', '1200*800', '960*1280', '1280*960', '720*1280', '1280*720', '1344*576'],
         capabilities: {
             negative_prompt: true,
             prompt_extend: true,
@@ -518,24 +604,23 @@ export const IMAGE_MODELS = [
     },
     {
         id: 'wan2.6-image',
-        name: '万相2.6-Image (图像生成与编辑)',
+        name: '万相2.6-Image (图像编辑)',
         provider: '阿里通义实验室',
-        description: '万相2.6图像生成与编辑模型，支持图像编辑和图文混排输出',
-        category: MODEL_CATEGORIES.TEXT_TO_IMAGE,
-        protocol: PROTOCOLS.ASYNC_T2I,
-        endpoint: '/services/aigc/image-generation/generation',
+        description: '万相2.6图像编辑模型，支持多图输入、风格迁移、主体一致性生成，需要输入1-4张参考图',
+        category: MODEL_CATEGORIES.IMAGE_EDITING,
+        protocol: PROTOCOLS.SYNC_MULTIMODAL,
+        endpoint: '/services/aigc/multimodal-generation/generation',
         requestFormat: 'multimodalMessages',
         outputType: OUTPUT_TYPES.IMAGE,
+        async: false,
         defaultRes: '1280*1280',
-        resolutions: ['1280*1280', '1104*1472', '1472*1104', '960*1696', '1696*960', '768*768', '512*512'],
+        resolutions: ['1280*1280', '1024*1024', '960*1280', '1280*960', '720*1280', '1280*720', '800*1200', '1200*800'],
         capabilities: {
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
             seed: true,
-            enable_interleave: true,
-            max_images: true,
-            n: true
+            n: true  // 图像编辑模式支持 1-4 张
         }
     },
     {
@@ -544,17 +629,19 @@ export const IMAGE_MODELS = [
         provider: '阿里通义实验室',
         description: '万相2.6文生图模型，支持在总像素面积与宽高比约束内自由选尺寸',
         category: MODEL_CATEGORIES.TEXT_TO_IMAGE,
-        protocol: PROTOCOLS.ASYNC_T2I,
-        endpoint: '/services/aigc/text2image/image-synthesis',
-        requestFormat: 'text2image',
+        protocol: PROTOCOLS.SYNC_MULTIMODAL,
+        endpoint: '/services/aigc/multimodal-generation/generation',
+        requestFormat: 'multimodalMessages',
         outputType: OUTPUT_TYPES.IMAGE,
+        async: false,
         defaultRes: '1280*1280',
         resolutions: ['1280*1280', '1104*1472', '1472*1104', '960*1696', '1696*960'],
         capabilities: {
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -573,7 +660,8 @@ export const IMAGE_MODELS = [
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -592,7 +680,8 @@ export const IMAGE_MODELS = [
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -611,7 +700,8 @@ export const IMAGE_MODELS = [
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -630,7 +720,8 @@ export const IMAGE_MODELS = [
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -649,7 +740,8 @@ export const IMAGE_MODELS = [
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -668,7 +760,8 @@ export const IMAGE_MODELS = [
             negative_prompt: true,
             prompt_extend: true,
             watermark: true,
-            seed: true
+            seed: true,
+            n: true  // 支持批量生成
         }
     },
     {
@@ -742,7 +835,7 @@ export const IMAGE_MODELS = [
         description: '人像风格重绘模型支持将人物照片，转换为多种预设或自定义的艺术风格',
         category: MODEL_CATEGORIES.IMAGE_EDITING,
         protocol: PROTOCOLS.ASYNC_T2I,
-        endpoint: '/services/aigc/image2image/image-synthesis',
+        endpoint: '/services/aigc/image-generation/generation',  // ✅ 修复：正确的接口
         requestFormat: 'styleRepaint',
         outputType: OUTPUT_TYPES.IMAGE,
         defaultRes: '1024*1024',
@@ -751,7 +844,7 @@ export const IMAGE_MODELS = [
             image_input: true,
             style_index: true,
             style_ref_url: true,
-            n: true // 输出图像数量 (1张)
+            n: false  // ✅ 修复：此模型仅输出1张
         }
     },
     {

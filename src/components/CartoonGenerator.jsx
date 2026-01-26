@@ -13,6 +13,7 @@ export const CartoonGenerator = ({ onGenerate, isGenerating, apiKey }) => {
     const [n, setN] = useState(1);
     const [watermark, setWatermark] = useState(false);
     const [seed, setSeed] = useState('');
+    const [strength, setStrength] = useState(0.5);
 
     // ESC键关闭预览
     useEffect(() => {
@@ -65,6 +66,7 @@ export const CartoonGenerator = ({ onGenerate, isGenerating, apiKey }) => {
             parameters: {
                 n: n,
                 watermark: watermark,
+                strength: strength,
                 ...(seed && { seed: parseInt(seed) })
             }
         };
@@ -185,6 +187,22 @@ export const CartoonGenerator = ({ onGenerate, isGenerating, apiKey }) => {
 
                         {showAdvanced && (
                             <div className="mt-3 space-y-3">
+                                <div>
+                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+                                        形象保持强度 ({strength.toFixed(1)})
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.1"
+                                        value={strength}
+                                        onChange={(e) => setStrength(parseFloat(e.target.value))}
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">值越大，生成结果越接近参考卡通形象</p>
+                                </div>
+
                                 <div className="flex items-center gap-3">
                                     <label className="flex items-center gap-2 text-sm text-gray-600">
                                         <input
