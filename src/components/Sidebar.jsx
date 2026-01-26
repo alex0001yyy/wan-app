@@ -133,26 +133,30 @@ const Sidebar = ({ activeMenu, onSelectMenu, className = '' }) => {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-50 bg-gray-50/50">
-                <div className="flex items-center justify-between px-2 py-2">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-200 to-blue-200 flex items-center justify-center text-xs font-bold text-violet-700">
-                            U
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="text-xs font-bold text-gray-900 truncate">用户工作台</div>
-                            <div className="text-[10px] text-gray-500 truncate">阿里云 DashScope</div>
-                        </div>
+            <div className="p-4 border-t border-gray-50 bg-gray-50/50 space-y-3">
+                {/* GitHub 链接 */}
+                <a
+                    href="https://github.com/alex0001yyy/wan-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-3 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-all group"
+                >
+                    <Github size={20} />
+                    <div className="flex-1">
+                        <div className="text-sm font-semibold">GitHub</div>
+                        <div className="text-[10px] text-gray-400">查看源码 & Star</div>
                     </div>
-                    <a
-                        href="https://github.com/alex0001yyy/wan-app"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="GitHub"
-                    >
-                        <Github size={18} />
-                    </a>
+                    <ExternalLink size={14} className="text-gray-400 group-hover:text-white transition-colors" />
+                </a>
+                
+                {/* 用户信息 */}
+                <div className="flex items-center gap-3 px-2 py-1">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-violet-200 to-blue-200 flex items-center justify-center text-xs font-bold text-violet-700">
+                        U
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-medium text-gray-700 truncate">阿里云 DashScope</div>
+                    </div>
                 </div>
             </div>
         </div>
