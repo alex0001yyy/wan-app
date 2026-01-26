@@ -239,7 +239,7 @@ export const VIDEO_EFFECT_MODELS = [
         provider: '阿里通义实验室',
         description: '图生视频专业版，支持全部首帧特效模板',
         protocol: PROTOCOLS.ASYNC_I2V,
-        endpoint: '/services/aigc/image2video/video-synthesis',
+        endpoint: '/services/aigc/video-generation/video-synthesis',  // 首帧特效使用 video-generation
         requestFormat: 'videoEffect',
         outputType: OUTPUT_TYPES.VIDEO,
         defaultRes: '720P',
@@ -268,7 +268,7 @@ export const VIDEO_EFFECT_MODELS = [
         provider: '阿里通义实验室',
         description: '图生视频极速版，支持部分首帧特效模板',
         protocol: PROTOCOLS.ASYNC_I2V,
-        endpoint: '/services/aigc/image2video/video-synthesis',
+        endpoint: '/services/aigc/video-generation/video-synthesis',  // 首帧特效使用 video-generation
         requestFormat: 'videoEffect',
         outputType: OUTPUT_TYPES.VIDEO,
         defaultRes: '720P',
@@ -293,7 +293,7 @@ export const VIDEO_EFFECT_MODELS = [
         provider: '阿里通义实验室',
         description: '人物变装特效，支持汉服、机甲、杂志封面等风格',
         protocol: PROTOCOLS.ASYNC_KF2V,
-        endpoint: '/services/aigc/image2video/video-synthesis',
+        endpoint: '/services/aigc/image2video/video-synthesis',  // 首尾帧特效使用 image2video
         requestFormat: 'videoEffect',
         outputType: OUTPUT_TYPES.VIDEO,
         defaultRes: '720P',
