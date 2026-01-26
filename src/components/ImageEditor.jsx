@@ -186,8 +186,8 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
                     ...(seed && { seed: parseInt(seed) })
                 }
             };
-        } else if (selectedModel === 'wan2.5-i2i-preview' || selectedModel === 'wan2.6-image') {
-            // Wan系列图像编辑模型 - 使用 imageArraySynthesis 格式
+        } else if (selectedModel === 'wan2.5-i2i-preview') {
+            // wan2.5-i2i-preview - 使用 imageArraySynthesis 格式
             // API格式：input.prompt + input.images数组
             const images = [inputImageUrl, ...referenceImageUrls].filter(Boolean);
             
@@ -199,6 +199,41 @@ export const ImageEditor = ({ onGenerate, isGenerating, apiKey }) => {
                 },
                 parameters: {
                     n: Math.min(n, 4),  // wan系列最多4张
+                    negative_prompt: negativePrompt,
+                    size: resolution,
+                    prompt_extend: promptExtend,
+                    watermark: watermark,
+                    ...(seed && { seed: parseInt(seed) })
+                }
+            };
+        } else if (selectedModel === 'wan2.6-image') {
+            // wan2.6-image - 使用 multimodalMessages 格式
+            // API格式：input.messages.content数组，图片在前、文本在后
+            const contentArray = [];
+            
+            // 1. 先添加输入图像
+            if (inputImageUrl) {
+                contentArray.push({ image: inputImageUrl });
+            }
+            
+            // 2. 再添加参考图像
+            referenceImageUrls.forEach(imgUrl => {
+                contentArray.push({ image: imgUrl });
+            });
+            
+            // 3. 最后添加文本编辑指令
+            contentArray.push({ text: prompt });
+            
+            taskData = {
+                model: selectedModel,
+                input: {
+                    messages: [{
+                        role: 'user',
+                        content: contentArray
+                    }]
+                },
+                parameters: {
+                    n: Math.min(n, 4),
                     negative_prompt: negativePrompt,
                     size: resolution,
                     prompt_extend: promptExtend,
