@@ -1,3 +1,5 @@
+# 该项目为纯个人项目，不接受被合作和被参与，希望每一个热爱的AI的同志们保持初心，乐于分享
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
